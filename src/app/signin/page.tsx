@@ -1,4 +1,27 @@
+"use client"
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { login } from "../../services/authService";
+
 export default function SignIn() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      await login(email, password);
+      router.push("/"); // ログイン後に遷移
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   return (
     <div>
       <div className="portrait:fixed portrait:inset-0 portrait:bg-[#5B7BA6] portrait:text-white portrait:text-2xl portrait:flex portrait:items-center portrait:justify-center portrait:z-50 portrait:overflow-hidden portrait:touch-none">
@@ -13,14 +36,16 @@ export default function SignIn() {
             className="absolute top-3 left-10"
           />
           <div className="flex justify-center items-center border-2 border-white w-full h-full">
-            <div className="relative mx-4 w-full h-hull">
+            <form onSubmit={handleLogin} className="relative mx-4 w-full h-hull">
               <div className="font-bold text-3xl text-[#5B7BA6] flex items-center justify-center mb-8">
                 ログイン
               </div>
               <div className="flex items-center justify-center py-2 px-4">
                 <input
-                  type="text"
+                  type="email"
                   placeholder="メールアドレス"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="border border-[#5B7BA6] bg-white rounded-lg text-[#5B7BA6] text-sm px-2 py-1 w-2/3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
@@ -28,11 +53,13 @@ export default function SignIn() {
                 <input
                   type="password"
                   placeholder="パスワード"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="border border-[#5B7BA6] bg-white rounded-lg text-[#5B7BA6] text-sm px-2 py-1 w-2/3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
               <div className="flex justify-center items-center mt-8 text-2xl">
-                <button className="rounded-lg bg-[#5B7BA6] font-bold text-white px-12 py-1">
+                <button type="submit" className="rounded-lg bg-[#5B7BA6] font-bold text-white px-12 py-1">
                   ログイン
                 </button>
               </div>
@@ -41,7 +68,7 @@ export default function SignIn() {
                   新規登録
                 </button>
               </div>
-            </div>
+            </form>
             <div>
               <img
                 src="/dice.png"
