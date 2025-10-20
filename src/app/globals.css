@@ -11,6 +11,16 @@
   /* --font-sans: var(--font-geist-sans); */
   --font-sans: var(--font-noto-serif-jp);
   --font-mono: var(--font-geist-mono);
+
+  /* 🎨 カスタムカラー */
+  --color-brown-default: #CBB994;
+  --color-brown-light: #E3DECF;
+  --color-blue-default: #5B7BA6;
+  --color-red-default: #A65B5B;
+  --color-yellow-default: #DDDB6C;
+  --color-green-default: #94CB99;
+  --color-pink-default: #DC6BA2;
+  --color-gray-light: #E2DED6;
 }
 
 @media (prefers-color-scheme: dark) {
