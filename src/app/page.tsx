@@ -7,11 +7,13 @@ export default function Home() {
 
       <div className="fixed inset-0 flex h-[100dvh] items-center justify-center bg-black overflow-hidden">
         <div className="relative w-full h-full max-w-[177.78vh] max-h-[56.25vw] aspect-video bg-[#E3DECF] py-2 px-4">
-          <div className="border-2 border-white w-full h-full">
-            <div className="relative my-2 mx-4">
-              <div className="text-[#5B7BA6] text-lg">
-                タイトル
-              </div>
+          <img
+            src="/logo.svg"
+            alt="ロゴ"
+            className="absolute top-3 left-10"
+          />
+          <div className= "flex justify-center items-center border-2 border-white w-full h-full">
+            <div className="relative mx-4 w-full h-hull">
               <div className="font-bold text-3xl text-[#5B7BA6] flex items-center justify-center text-center m-8">
                 わくわく！<br />高専教員なりきりゲーム
               </div>
