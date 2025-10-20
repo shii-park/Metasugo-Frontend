@@ -1,4 +1,33 @@
+"use client"
+
+import React, { useState } from "react";
+import { signup } from "../../services/authService";
+import { useRouter } from "next/navigation";
+
 export default function SignUp() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const router = useRouter();
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      console.log("サインアップ開始");
+      const userData = await signup(email, password);
+      console.log("サインアップ成功:", userData);
+  
+      localStorage.setItem("user", JSON.stringify(userData));
+  
+      console.log("ホーム画面へ遷移します");
+      router.push("/");// 登録後に遷移
+    } catch (error) {
+      console.error("サインアップエラー:", error);
+      alert("サインアップに失敗しました。");
+    }
+  };
+
   return (
     <div>
       <div className="portrait:fixed portrait:inset-0 portrait:bg-[#5B7BA6] portrait:text-white portrait:text-2xl portrait:flex portrait:items-center portrait:justify-center portrait:z-50 portrait:overflow-hidden portrait:touch-none">
@@ -13,33 +42,42 @@ export default function SignUp() {
             className="absolute top-3 left-10"
           />
           <div className="flex justify-center items-center border-2 border-white w-full h-full">
-            <div className="relative mx-4 w-full h-hull">
+            <form onSubmit={handleSignup} className="relative mx-4 w-full h-hull">
               <div className="font-bold text-3xl text-[#5B7BA6] flex items-center justify-center mb-4">
                 新規登録
               </div>
-              <div className="flex items-center justify-center py-2 px-4">
+              <div className="flex items-center justify-center py-2 px-4 w-full">
                 <input
-                  type="text"
+                  type="email"
                   placeholder="メールアドレス"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                   className="border border-[#5B7BA6] bg-white rounded-lg text-[#5B7BA6] text-sm px-2 py-1 w-2/3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
-              <div className="flex items-center justify-center py-2 px-4">
+              <div className="flex items-center justify-center py-2 px-4 w-full">
                 <input
                   type="password"
                   placeholder="パスワード"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                   className="border border-[#5B7BA6] bg-white rounded-lg text-[#5B7BA6] text-sm px-2 py-1 w-2/3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
-              <div className="flex items-center justify-center py-2 px-4">
+              <div className="flex items-center justify-center py-2 px-4 w-full">
                 <input
                   type="password"
                   placeholder="パスワード（確認）"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
                   className="border border-[#5B7BA6] bg-white rounded-lg text-[#5B7BA6] text-sm px-2 py-1 w-2/3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
               <div className="flex justify-center items-center mt-6 text-2xl">
-                <button className="rounded-lg bg-[#5B7BA6] font-bold text-white px-12 py-1">
+                <button type="submit" className="rounded-lg bg-[#5B7BA6] font-bold text-white px-12 py-1">
                   新規登録
                 </button>
               </div>
@@ -48,7 +86,7 @@ export default function SignUp() {
                   キャンセル
                 </button>
               </div>
-            </div>
+            </form>
             <div>
               <img
                 src="/gold.png"
