@@ -1,29 +1,44 @@
-// ログイン確認用
-// "use client";
+"use client";
 
-// import React from "react";
-// import { useAuth } from "../context/AuthContext";
-// import { useRouter } from "next/navigation";
+import React from "react";
+import { useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useRouter } from "next/navigation";
+// ログアウト処理
 // import { logout } from "../services/authService";
 
 
 export default function Home() {
-  // ログイン確認用
-  // const { user } = useAuth();
-  // const router = useRouter();
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
+  // ログアウト処理
   // const handleLogout = async () => {
   //   await logout();
   //   router.push("/");
   // };
 
-  // if (!user) {
-  //   return (
-  //     <div className="flex h-screen items-center justify-center">
-  //       <p>ログインしてください...</p>
-  //     </div>
-  //   );
-  // }
+  useEffect(() => {
+    if (!loading &&!user) {
+      router.push("/signin"); // ログインしていなければ自動遷移
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center text-2xl bg-[#5B7BA6]">
+        <p>読み込み中...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex h-screen items-center justify-center text-2xl bg-[#5B7BA6]">
+        <p>ログインページに移動中...</p>
+      </div>
+    );
+  }
 
   return (
 
