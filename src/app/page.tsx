@@ -6,6 +6,7 @@
 // import { useRouter } from "next/navigation";
 // import { logout } from "../services/authService";
 
+
 export default function Home() {
   // ログイン確認用
   // const { user } = useAuth();
