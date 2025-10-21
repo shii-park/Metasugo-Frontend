@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { signup } from "../../services/authService";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -82,9 +83,9 @@ export default function SignUp() {
                 </button>
               </div>
               <div className="flex justify-center items-center mt-4 text-2xl">
-                <button className="rounded-lg font-bold text-[#5B7BA6] px-12 py-1">
+                <Link href="/signin" className="rounded-lg font-bold text-[#5B7BA6] px-12 py-1">
                   キャンセル
-                </button>
+                </Link>
               </div>
             </form>
             <div>

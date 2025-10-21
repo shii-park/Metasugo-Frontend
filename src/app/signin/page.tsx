@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "../../services/authService";
+import Link from "next/link";
 
 export default function SignIn() {
   const router = useRouter();
@@ -64,9 +65,9 @@ export default function SignIn() {
                 </button>
               </div>
               <div className="flex justify-center items-center mt-4 text-2xl">
-                <button className="rounded-lg font-bold text-[#5B7BA6] px-12 py-1">
+                <Link href="/signup" className="rounded-lg font-bold text-[#5B7BA6] px-12 py-1">
                   新規登録
-                </button>
+                </Link>
               </div>
             </form>
             <div>
