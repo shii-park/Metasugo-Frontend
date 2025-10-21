@@ -1,8 +1,7 @@
-export default function Game() {
-  return (
-    <div className="w-full h-auto">
-      <div>game</div>
-        <div>すごろく画面</div>
-    </div>
-  );
-}
+
+
+// /app/game/page.tsx
+// ========================================
+// /game にアクセスされた際に、最初のマップ (/game/1) へリダイレクトする。
+// もしくは、前回プレイ中だったマップIDをlocalStorage/Zustandから読み取って復帰する。
+// ========================================
