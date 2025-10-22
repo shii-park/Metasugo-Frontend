@@ -32,22 +32,26 @@ export default function Game() {
           className='absolute right-[3%] bottom-[3%]'
           onRoll={() => alert('サイコロをふる！')}
         />
-        <div className='absolute inset-0 grid grid-cols-10 grid-rows-5 px-[3%] py-[5%]'>
-          <Tile col={2} row={5} colorClass='bg-blue-default' />
-          <Tile col={4} row={5} colorClass='bg-red-default' />
-          <Tile col={6} row={5} colorClass='bg-green-default' />
+        <div className='absolute inset-0 grid grid-cols-9 grid-rows-5 px-[10%] pt-[9.5%] pb-[7%]'
+          style={{
+            gridTemplateColumns:'9.5% 13.125% 9.5% 13.125% 9.5% 13.125% 9.5% 13.125% 9.5%',
+            gridTemplateRows:'18% 20% 18% 26% 18%',
+          }}>
+          <Tile col={1} row={5} colorClass='bg-blue-default' className="w-full h-full" />
+          <Tile col={3} row={5} colorClass='bg-red-default' className="w-full h-full"/>
+          <Tile col={5} row={5} colorClass='bg-blue-default' className="w-full h-full"/>
 
-          <Tile col={2} row={3} colorClass='bg-blue-default' />
-          <Tile col={4} row={3} colorClass='bg-red-default' />
-          <Tile col={6} row={3} colorClass='bg-green-default' />
-          <Tile col={8} row={3} colorClass='bg-blue-default' />
-          <Tile col={10} row={3} colorClass='bg-red-default' />
+          <Tile col={1} row={3} colorClass='bg-yellow-default' className="w-full h-full"/>
+          <Tile col={3} row={3} colorClass='bg-blue-default' className="w-full h-full"/>
+          <Tile col={5} row={3} colorClass='bg-gray-300' className="w-full h-full"/>
+          <Tile col={7} row={3} colorClass='bg-red-default' className="w-full h-full"/>
+          <Tile col={9} row={3} colorClass='bg-yellow-default' className="w-full h-full"/>
 
-          <Tile col={2} row={1} colorClass='bg-blue-default' />
-          <Tile col={4} row={1} colorClass='bg-red-default' />
-          <Tile col={6} row={1} colorClass='bg-green-default' />
-          <Tile col={8} row={1} colorClass='bg-blue-default' />
-          <Tile col={10} row={1} colorClass='bg-red-default' />
+          <Tile col={1} row={1} colorClass='bg-blue-default' className="w-full h-full"/>
+          <Tile col={3} row={1} colorClass='bg-red-default' className="w-full h-full"/>
+          <Tile col={5} row={1} colorClass='bg-green-default' className="w-full h-full"/>
+          <Tile col={7} row={1} colorClass='bg-pink-default' className="w-full h-full"/>
+          <Tile col={9} row={1} colorClass='bg-blue-default' className="w-full h-full"/>
         </div>
       </div>
     </div>
