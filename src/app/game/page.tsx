@@ -1,7 +1,8 @@
-
-
-// /app/game/page.tsx
-// ========================================
 // /game にアクセスされた際に、最初のマップ (/game/1) へリダイレクトする。
-// もしくは、前回プレイ中だったマップIDをlocalStorage/Zustandから読み取って復帰する。
-// ========================================
+
+// src/app/game/page.tsx
+import { redirect } from "next/navigation";
+
+export default function Page() {
+  redirect("/game/1");
+}

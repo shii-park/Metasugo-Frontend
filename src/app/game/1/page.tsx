@@ -5,7 +5,7 @@ import SettingsMenu from '@/components/game/SettingMenu'
 import Tile from '@/components/game/Tile'
 import Image from 'next/image'
 
-export default function Game() {
+export default function Game1() {
   return (
     <div className='relative w-full h-[100dvh] bg-brown-light grid place-items-center'>
       <div className='relative aspect-[16/9] w-[min(100vw,calc(100dvh*16/9))] overflow-hidden'>
