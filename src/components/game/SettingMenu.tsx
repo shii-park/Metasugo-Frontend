@@ -1,7 +1,7 @@
 'use client'
-import Image from 'next/image'
-import { useState, useRef } from 'react'
+import Image from 'next/image';
 import Link from "next/link";
+import { useRef, useState } from 'react';
 import { useAuth } from "../../context/AuthContext";
 
 function MenuButton({
@@ -105,7 +105,7 @@ export default function SettingsMenu({
                 />
               </div>
               <Link href="/" className="py-2 px-8 text-2xl text-white font-bold bg-[#5B7BA6] rounded-md">
-                戻る
+                はい
               </Link>
             </div>
           </div>
