@@ -6,8 +6,11 @@ import SettingsMenu from '@/components/game/SettingMenu'
 import Tile from '@/components/game/Tile'
 import Image from 'next/image'
 import { useState } from 'react'
+import { colorClassOfEvent } from '../../../lib/game/eventColor'
+import { useEvents } from '../../../lib/game/useEvents'
 
 export default function Game1() {
+  const { byId } = useEvents('/api/game/events1')
   const [isDiceOpen, setIsDiceOpen] = useState(false)
 
   return (
@@ -38,7 +41,7 @@ export default function Game1() {
         />
         <DiceOverlay
           isOpen={isDiceOpen}
-          onClose={() => setIsDiceOpen(false)} // 「マップに戻る」押下で閉じる
+          onClose={() => setIsDiceOpen(false)}
         />
         <div
           className='absolute inset-0 grid grid-cols-9 grid-rows-5 px-[10%] pt-[9.5%] pb-[7%]'
@@ -51,81 +54,81 @@ export default function Game1() {
           <Tile
             col={1}
             row={5}
-            colorClass='bg-blue-default'
+            colorClass={colorClassOfEvent(byId.get(1)?.type)}
             className='w-full h-full'
           />
           <Tile
             col={3}
             row={5}
-            colorClass='bg-red-default'
+            colorClass={colorClassOfEvent(byId.get(2)?.type)}
             className='w-full h-full'
           />
           <Tile
             col={5}
             row={5}
-            colorClass='bg-blue-default'
+            colorClass={colorClassOfEvent(byId.get(3)?.type)}
             className='w-full h-full'
           />
 
           <Tile
             col={1}
             row={3}
-            colorClass='bg-yellow-default'
+            colorClass={colorClassOfEvent(byId.get(4)?.type)}
             className='w-full h-full'
           />
           <Tile
             col={3}
             row={3}
-            colorClass='bg-blue-default'
+            colorClass={colorClassOfEvent(byId.get(5)?.type)}
             className='w-full h-full'
           />
           <Tile
             col={5}
             row={3}
-            colorClass='bg-gray-300'
+            colorClass={colorClassOfEvent(byId.get(6)?.type)}
             className='w-full h-full'
           />
           <Tile
             col={7}
             row={3}
-            colorClass='bg-red-default'
+            colorClass={colorClassOfEvent(byId.get(7)?.type)}
             className='w-full h-full'
           />
           <Tile
             col={9}
             row={3}
-            colorClass='bg-yellow-default'
+            colorClass={colorClassOfEvent(byId.get(8)?.type)}
             className='w-full h-full'
           />
 
           <Tile
             col={1}
             row={1}
-            colorClass='bg-blue-default'
+            colorClass={colorClassOfEvent(byId.get(9)?.type)}
             className='w-full h-full'
           />
           <Tile
             col={3}
             row={1}
-            colorClass='bg-red-default'
+            colorClass={colorClassOfEvent(byId.get(10)?.type)}
             className='w-full h-full'
           />
           <Tile
             col={5}
             row={1}
-            colorClass='bg-green-default'
+            colorClass={colorClassOfEvent(byId.get(12)?.type)}
             className='w-full h-full'
           />
           <Tile
             col={7}
             row={1}
-            colorClass='bg-pink-default'
+            colorClass={colorClassOfEvent(byId.get(13)?.type)}
             className='w-full h-full'
           />
           <Tile
             col={9}
             row={1}
-            colorClass='bg-blue-default'
+            colorClass={colorClassOfEvent(byId.get(14)?.type)}
             className='w-full h-full'
           />
         </div>
