@@ -2,13 +2,17 @@
 // 分岐の選択肢でaを選んだ時のルート
 
 'use client'
-import Dice from '@/components/game/Dice'
+import DiceButton from '@/components/game/DiceButton'
+import DiceOverlay from '@/components/game/DiceOverlay'
 import GameHUD from '@/components/game/GameHUD'
 import SettingsMenu from '@/components/game/SettingMenu'
 import Tile from '@/components/game/Tile'
 import Image from 'next/image'
+import { useState } from 'react'
 
 export default function Game2a() {
+  const [isDiceOpen, setIsDiceOpen] = useState(false)
+
   return (
     <div className='relative w-full h-[100dvh] bg-brown-light grid place-items-center'>
       <div className='relative aspect-[16/9] w-[min(100vw,calc(100dvh*16/9))] overflow-hidden'>
@@ -28,29 +32,35 @@ export default function Game2a() {
         <div className='absolute top-[3%] right-[6%]'>
           <SettingsMenu sizePct={8} className='w-1/5 z-10' />
         </div>
-        <Dice
-          className='absolute right-[3%] bottom-[3%]'
-          onRoll={() => alert('サイコロをふる！')}
+        <DiceButton
+          onClick={() => setIsDiceOpen(true)}
+          className='absolute right-[3%] bottom-[3%] z-10'
         />
-        <div className='absolute inset-0 grid grid-cols-7 grid-rows-5 px-[8%] pt-[8.5%] pb-[8%]'
+        <DiceOverlay
+          isOpen={isDiceOpen}
+          onClose={() => setIsDiceOpen(false)}
+        />
+        <div
+          className='absolute inset-0 grid grid-cols-7 grid-rows-5 px-[8%] pt-[8.5%] pb-[8%]'
           style={{
-            gridTemplateColumns:'8.5% 18% 8.5% 18% 8.5% 18% 8.5%',
-            gridTemplateRows:'17% 23.5% 17% 24% 17%',
-          }}>
-          <Tile col={1} row={5} colorClass='bg-red-default'/>
-          <Tile col={3} row={5} colorClass='bg-blue-default'/>
-          <Tile col={5} row={5} colorClass='bg-green-default'/>
-          <Tile col={7} row={5} colorClass='bg-red-default'/>
+            gridTemplateColumns: '8.5% 18% 8.5% 18% 8.5% 18% 8.5%',
+            gridTemplateRows: '17% 23.5% 17% 24% 17%',
+          }}
+        >
+          <Tile col={1} row={5} colorClass='bg-red-default' />
+          <Tile col={3} row={5} colorClass='bg-blue-default' />
+          <Tile col={5} row={5} colorClass='bg-green-default' />
+          <Tile col={7} row={5} colorClass='bg-red-default' />
 
-          <Tile col={1} row={3} colorClass='bg-blue-default'/>
-          <Tile col={3} row={3} colorClass='bg-red-default'/>
-          <Tile col={5} row={3} colorClass='bg-red-default'/>
-          <Tile col={7} row={3} colorClass='bg-blue-default'/>
+          <Tile col={1} row={3} colorClass='bg-blue-default' />
+          <Tile col={3} row={3} colorClass='bg-red-default' />
+          <Tile col={5} row={3} colorClass='bg-red-default' />
+          <Tile col={7} row={3} colorClass='bg-blue-default' />
 
-          <Tile col={1} row={1} colorClass='bg-yellow-300'/>
-          <Tile col={3} row={1} colorClass='bg-blue-default'/>
-          <Tile col={5} row={1} colorClass='bg-red-default'/>
-          <Tile col={7} row={1} colorClass='bg-gray-300'/>
+          <Tile col={1} row={1} colorClass='bg-yellow-300' />
+          <Tile col={3} row={1} colorClass='bg-blue-default' />
+          <Tile col={5} row={1} colorClass='bg-red-default' />
+          <Tile col={7} row={1} colorClass='bg-gray-300' />
         </div>
       </div>
     </div>
