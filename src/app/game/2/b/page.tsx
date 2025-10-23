@@ -1,4 +1,11 @@
+// マップ2専用UI。
+// 分岐の選択肢でbを選んだ時のルート
+
 'use client'
+import Dice from '@/components/game/Dice'
+import GameHUD from '@/components/game/GameHUD'
+import SettingsMenu from '@/components/game/SettingMenu'
+import Tile from '@/components/game/Tile'
 import Image from 'next/image'
 
 export default function Game2b() {
@@ -13,6 +20,38 @@ export default function Game2b() {
           aria-hidden
           priority
         />
+        <GameHUD
+          money={10000}
+          remaining={50}
+          className='w-full absolute top-[3%] left-[3%]'
+        />
+        <div className='absolute top-[3%] right-[6%]'>
+          <SettingsMenu sizePct={8} className='w-1/5 z-10' />
+        </div>
+        <Dice
+          className='absolute right-[3%] bottom-[3%]'
+          onRoll={() => alert('サイコロをふる！')}
+        />
+        <div className='absolute inset-0 grid grid-cols-7 grid-rows-5 px-[8%] pt-[8.5%] pb-[8%]'
+          style={{
+            gridTemplateColumns:'8.5% 18% 8.5% 18% 8.5% 18% 8.5%',
+            gridTemplateRows:'17% 23.5% 17% 24% 17%',
+          }}>
+          <Tile col={1} row={5} colorClass='bg-red-default'/>
+          <Tile col={3} row={5} colorClass='bg-blue-default'/>
+          <Tile col={5} row={5} colorClass='bg-blue-default'/>
+          <Tile col={7} row={5} colorClass='bg-red-default'/>
+
+          <Tile col={1} row={3} colorClass='bg-blue-default'/>
+          <Tile col={3} row={3} colorClass='bg-red-default'/>
+          <Tile col={5} row={3} colorClass='bg-red-default'/>
+          <Tile col={7} row={3} colorClass='bg-blue-default'/>
+
+          <Tile col={1} row={1} colorClass='bg-blue-default'/>
+          <Tile col={3} row={1} colorClass='bg-blue-default'/>
+          <Tile col={5} row={1} colorClass='bg-red-default'/>
+          <Tile col={7} row={1} colorClass='bg-gray-300'/>
+        </div>
       </div>
     </div>
   )

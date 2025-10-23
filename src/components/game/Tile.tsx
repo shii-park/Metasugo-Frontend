@@ -11,7 +11,7 @@ type Props = {
 export default function Tile({
   col,
   row,
-  sizeInCellPct = 72,
+  sizeInCellPct = 100,
   colorClass = "bg-blue-default",
   className = "",
   label,
@@ -22,10 +22,15 @@ export default function Tile({
       type="button"
       aria-label={label ?? "マス"}
       onClick={onClick}
-      style={{ gridColumn: col, gridRow: row }}
+      style={{ 
+        gridColumn: col, 
+        gridRow: row,
+        width: `${sizeInCellPct}%`,
+        height: `${sizeInCellPct}%`,
+        placeSelf: 'center',}}
       className={[
-        "place-self-center",
-        `w-[${sizeInCellPct}%]`,
+        // "place-self-center",
+        // `w-[${sizeInCellPct}%]`,
         "aspect-square",
         "border-2 border-white shadow-sm",
         colorClass,
