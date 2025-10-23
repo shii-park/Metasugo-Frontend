@@ -6,11 +6,11 @@ import SettingsMenu from '@/components/game/SettingMenu'
 import Tile from '@/components/game/Tile'
 import Image from 'next/image'
 import { useState } from 'react'
-import { colorClassOfEvent } from './eventColor'
-import { useEvents } from './useEvents'
+import { colorClassOfEvent } from '../../../lib/game/eventColor'
+import { useEvents } from '../../../lib/game/useEvents'
 
 export default function Game1() {
-  const { byId } = useEvents()
+  const { byId } = useEvents('/api/game/events1')
   const [isDiceOpen, setIsDiceOpen] = useState(false)
 
   return (

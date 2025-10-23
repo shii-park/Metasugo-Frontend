@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import type { EventsResponse } from './type'
+import type { EventsResponse } from '../type'
 
 // 本来はバックエンドからやってくるデータ。今回は仮で作成中
 export async function GET() {

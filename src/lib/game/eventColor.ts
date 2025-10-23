@@ -1,5 +1,5 @@
 // app/game/1/eventColor.ts
-import type { EventType } from '@/app/api/game/events1/type'
+import type { EventType } from '@/app/api/game/type'
 
 const EVENT_COLOR: Record<EventType, string> = {
   money_plus:  'bg-blue-default',   // お金＋
