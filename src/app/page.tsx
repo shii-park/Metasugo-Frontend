@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useRouter } from "next/navigation";
 import { logout } from "../services/authService";
 
 
@@ -55,6 +55,7 @@ export default function Home() {
       <div className="fixed inset-0 flex h-[100dvh] items-center justify-center bg-black overflow-hidden">
         <div className="relative w-full h-full max-w-[177.78vh] max-h-[56.25vw] aspect-video bg-[#E3DECF] py-2 px-4">
           <div className="flex">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.svg"
               alt="ロゴ"
@@ -72,7 +73,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          
+
           <div className= "flex justify-center items-center border-2 border-white w-full h-full">
             <div className="relative mx-4 w-full h-hull">
               <div className="font-bold text-3xl text-[#5B7BA6] flex items-center justify-center text-center mb-4">
@@ -92,9 +93,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex justify-center items-center mt-8 text-2xl">
-                <button className="rounded-lg bg-[#5B7BA6] font-bold text-white px-12 py-1">
-                  スタート
-                </button>
+                <Link　className="rounded-lg bg-[#5B7BA6] font-bold text-white px-12 py-1" href={"/game/1"}>スタート</Link>
               </div>
             </div>
           </div>
@@ -102,9 +101,4 @@ export default function Home() {
       </div>
     </div>
   );
-    // <div className="w-full h-auto">
-    //   <div>home</div>
-    //   <div>ここにはゲームスタートとかのボタンがあるかんじ</div>
-    // </div>
-  // );
 }
