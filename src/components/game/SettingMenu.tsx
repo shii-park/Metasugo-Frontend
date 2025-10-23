@@ -46,7 +46,9 @@ export default function SettingsMenu({
     switch (activeView) {
       case 'game':
         return (
-          <div className="text-[#5B7BA6] font-bold text-lg p-4">ゲーム説明を表示</div>
+          <div className="flex flex-col justify-center items-center text-[#5B7BA6] font-bold text-lg p-4">
+              ゲーム説明を表示
+          </div>
         )
       case 'account':
         return (
@@ -61,9 +63,15 @@ export default function SettingsMenu({
                   className="w-16 h-16"
                 />
               </div>
-              <div className="mb-8">
+              <div className="mb-4">
                 {user?.email ?? "ゲストユーザー"}
               </div>
+              <button
+              onClick={() => setActiveView(null)}
+              className="mb-4 px-8 py-1 bg-[#5B7BA6] text-2xl font-bold text-white rounded-md hover:opacity-80"
+              >
+                閉じる
+              </button>
             </div>
           </div>
         )
@@ -74,7 +82,7 @@ export default function SettingsMenu({
               <div className="font-bold text-2xl mx-12 mb-5">
                 過去記録
               </div>
-              <div className="flex flex-col bg-white rounded-md p-2 mx-4 mb-2 w-4/5">
+              <div className="flex flex-col bg-white rounded-md p-2 mx-4 mb-4 w-4/5">
                 <div className="">
                   最高金額
                 </div>
@@ -88,6 +96,12 @@ export default function SettingsMenu({
                   〇〇回
                 </div>
               </div>
+              <button
+                onClick={() => setActiveView(null)}
+                className="px-8 py-1 bg-[#5B7BA6] text-2xl font-bold text-white rounded-md hover:opacity-80"
+              >
+                閉じる
+              </button>
             </div>
           </div>
         )
@@ -104,9 +118,15 @@ export default function SettingsMenu({
                   className="w-16 h-16"
                 />
               </div>
-              <Link href="/" className="py-2 px-8 text-2xl text-white font-bold bg-[#5B7BA6] rounded-md">
-                はい
+              <Link href="/" className="m-2 py-1 px-8 text-2xl text-white font-bold bg-[#5B7BA6] rounded-md">
+                戻る
               </Link>
+              <button
+                onClick={() => setActiveView(null)}
+                className="text-lg text-[#5B7BA6] rounded-md hover:opacity-80"
+              >
+                キャンセル
+              </button>
             </div>
           </div>
         )
@@ -175,11 +195,8 @@ export default function SettingsMenu({
             <div className="flex justify-end">
               <button
                 onClick={() => {
-                  if (activeView) {
-                    setActiveView(null)
-                  } else {
-                    setOpen(false)
-                  }
+                    setOpen(false);
+                    setActiveView(null);
                 }}
                 className="pt-2 pr-2"
               >
