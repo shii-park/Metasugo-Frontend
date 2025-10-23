@@ -1,15 +1,14 @@
 // app/api/game/events1/types.ts
 export type EventType =
-  | 'money_plus'      // お金＋
-  | 'money_minus'     // お金−
-  | 'quiz'            // クイズ
-  | 'branch'          // 分岐
-  | 'global'          // 全体効果
-  | 'neighbor'        // 隣接効果
-  | 'gamble'          // ギャンブル
-  | 'blank'           // 何もなし
+  | 'money_plus'
+  | 'money_minus'
+  | 'quiz'
+  | 'branch'
+  | 'global'
+  | 'neighbor'
+  | 'gamble'
+  | 'blank'
 
-// タイルごとのイベント（判定用：discriminated union）
 export type TileEvent =
   | { tileId: number; type: 'money_plus'; amount: number }
   | { tileId: number; type: 'money_minus'; amount: number }

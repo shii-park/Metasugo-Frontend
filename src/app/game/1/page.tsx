@@ -41,7 +41,7 @@ export default function Game1() {
         />
         <DiceOverlay
           isOpen={isDiceOpen}
-          onClose={() => setIsDiceOpen(false)} // 「マップに戻る」押下で閉じる
+          onClose={() => setIsDiceOpen(false)}
         />
         <div
           className='absolute inset-0 grid grid-cols-9 grid-rows-5 px-[10%] pt-[9.5%] pb-[7%]'

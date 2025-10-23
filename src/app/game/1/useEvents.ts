@@ -12,7 +12,6 @@ export function useEvents() {
       .catch(() => setData({ totalTiles: 0, events: [] }))
   }, [])
 
-  // 参照しやすい Map（tileId → TileEvent）
   const byId = useMemo(
     () => new Map<number, TileEvent>(data?.events.map(e => [e.tileId, e]) ?? []),
     [data]
