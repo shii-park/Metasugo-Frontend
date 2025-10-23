@@ -29,7 +29,7 @@ export default function Game1() {
         <div className='absolute top-[3%] right-[6%]'>
           <SettingsMenu sizePct={8} className='w-1/5 z-10' />
         </div>
-        <div className='absolute bottom-[15%] right-[18%] rounded-md bg-brown-default/90 text-white px-4 py-2 text-sm'>
+        <div className='absolute bottom-[10%] sm:bottom-[12%] right-[18%] rounded-md bg-brown-default/90 text-white border-2 border-white px-4 py-2 md:py-8 md:px-12 font-bold text-xl md:text-3xl'>
           スタート
         </div>
         <DiceButton
