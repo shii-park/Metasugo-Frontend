@@ -39,6 +39,17 @@ export default function Game1() {
   const [currentTileId, setCurrentTileId] = useState(1)
   const cur = positions[currentTileId - 1]
   const TOTAL_TILES = positions.length
+  const [isMoving, setIsMoving] = useState(false)
+
+  async function moveBy(steps: number) {
+    if (isMoving) return
+    setIsMoving(true)
+    for (let i = 0; i < steps; i++) {
+      setCurrentTileId((prev) => (prev === TOTAL_TILES ? 1 : prev + 1))
+      await new Promise((r) => setTimeout(r, 250))
+    }
+    setIsMoving(false)
+  }
 
   return (
     <div className='relative w-full h-[100dvh] bg-brown-light grid place-items-center'>
@@ -70,14 +81,9 @@ export default function Game1() {
           isOpen={isDiceOpen}
           onClose={() => setIsDiceOpen(false)}
           getDiceValue={async () => {
-            // バックエンド(モック)から出目を取得
             const res = await fetch('/api/dice', { cache: 'no-store' })
             if (!res.ok) throw new Error('サイコロAPIエラー')
             const { value } = (await res.json()) as { value: number }
-
-            // 末尾を超えたら一旦ループするようにしている
-            setCurrentTileId((prev) => ((prev + value - 1) % TOTAL_TILES) + 1)
-
             return Math.max(1, Math.min(6, Math.floor(value))) as
               | 1
               | 2
@@ -86,6 +92,7 @@ export default function Game1() {
               | 5
               | 6
           }}
+          onConfirm={(value) => moveBy(value)}
         />
         <div
           className='absolute inset-0 grid grid-cols-9 grid-rows-5 px-[10%] pt-[9.5%] pb-[7%]'
