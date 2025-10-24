@@ -2,6 +2,7 @@
 import DiceButton from '@/components/game/DiceButton'
 import DiceOverlay from '@/components/game/DiceOverlay'
 import GameHUD from '@/components/game/GameHUD'
+import Player from '@/components/game/Player'
 import SettingsMenu from '@/components/game/SettingMenu'
 import Tile from '@/components/game/Tile'
 import Image from 'next/image'
@@ -9,9 +10,35 @@ import { useState } from 'react'
 import { colorClassOfEvent } from '../../../lib/game/eventColor'
 import { useEvents } from '../../../lib/game/useEvents'
 
+const positions = [
+  { col: 7, row: 5 }, // スタート
+  { col: 5, row: 5 },
+  { col: 3, row: 5 },
+  { col: 1, row: 5 },
+  { col: 1, row: 3 },
+  { col: 3, row: 3 },
+  { col: 5, row: 3 },
+  { col: 7, row: 3 },
+  { col: 9, row: 3 },
+  { col: 9, row: 1 },
+  { col: 7, row: 1 },
+  { col: 5, row: 1 },
+  { col: 3, row: 1 },
+  { col: 1, row: 1 },
+]
+
+const COLS = [9.5, 13.125, 9.5, 13.125, 9.5, 13.125, 9.5, 13.125, 9.5]
+const ROWS = [18, 20, 18, 26, 18]
+const PAD_X = 10 // px-[10%]
+const PAD_TOP = 9.5 // pt-[9.5%]
+const PAD_BOTTOM = 7 // pb-[7%]
+
 export default function Game1() {
   const { byId } = useEvents('/api/game/events1')
   const [isDiceOpen, setIsDiceOpen] = useState(false)
+  const [currentTileId, setCurrentTileId] = useState(1)
+  const cur = positions[currentTileId - 1]
+  const TOTAL_TILES = positions.length
 
   return (
     <div className='relative w-full h-[100dvh] bg-brown-light grid place-items-center'>
@@ -42,6 +69,23 @@ export default function Game1() {
         <DiceOverlay
           isOpen={isDiceOpen}
           onClose={() => setIsDiceOpen(false)}
+          getDiceValue={async () => {
+            // バックエンド(モック)から出目を取得
+            const res = await fetch('/api/dice', { cache: 'no-store' })
+            if (!res.ok) throw new Error('サイコロAPIエラー')
+            const { value } = (await res.json()) as { value: number }
+
+            // 末尾を超えたら一旦ループするようにしている
+            setCurrentTileId((prev) => ((prev + value - 1) % TOTAL_TILES) + 1)
+
+            return Math.max(1, Math.min(6, Math.floor(value))) as
+              | 1
+              | 2
+              | 3
+              | 4
+              | 5
+              | 6
+          }}
         />
         <div
           className='absolute inset-0 grid grid-cols-9 grid-rows-5 px-[10%] pt-[9.5%] pb-[7%]'
@@ -132,6 +176,17 @@ export default function Game1() {
             className='w-full h-full'
           />
         </div>
+        <Player
+          col={cur.col}
+          row={cur.row}
+          colsPct={COLS}
+          rowsPct={ROWS}
+          padXPct={PAD_X}
+          padTopPct={PAD_TOP}
+          padBottomPct={PAD_BOTTOM}
+          label='あなた'
+          imgSrc='/player1.png'
+        />
       </div>
     </div>
   )
