@@ -1,4 +1,5 @@
 'use client'
+import { EventType } from '@/app/api/game/type'
 import { EVENT_BY_COLOR } from '@/components/events'
 import DiceButton from '@/components/game/DiceButton'
 import DiceOverlay from '@/components/game/DiceOverlay'
@@ -8,11 +9,10 @@ import SettingsMenu from '@/components/game/SettingMenu'
 import Tile from '@/components/game/Tile'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { colorClassOfEvent } from '../../../lib/game/eventColor'
 import { useEvents } from '../../../lib/game/useEvents'
 
-// スタートは装飾のみにした
 const START_POS = { col: 7, row: 5 }
 
 // 下段（row=5）右→左 → 中段（row=3）左→右 → 上段（row=1）右→左
@@ -34,9 +34,9 @@ const positions = [
 
 const COLS = [9.5, 13.125, 9.5, 13.125, 9.5, 13.125, 9.5, 13.125, 9.5]
 const ROWS = [18, 20, 18, 26, 18]
-const PAD_X = 10 // px-[10%]
-const PAD_TOP = 12 // pt-[9.5%]
-const PAD_BOTTOM = 7 // pb-[7%]
+const PAD_X = 10
+const PAD_TOP = 16
+const PAD_BOTTOM = 7
 
 export default function Game1() {
   const router = useRouter()
@@ -51,18 +51,15 @@ export default function Game1() {
   const [isDiceOpen, setIsDiceOpen] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
   const [activeEventColor, setActiveEventColor] = useState<string | null>(null)
-  const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
-  // 最後のタイルに着地したら2ページ目へ
-  useEffect(() => {
-    if (step === TOTAL_TILES && !goalPushedRef.current) {
-      goalPushedRef.current = true
-      router.push('/game/2/a')
-    }
-  }, [step, TOTAL_TILES, router])
+  const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
+
+  const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
   async function moveBy(steps: number) {
     if (isMoving || activeEventColor) return
+    if (step >= TOTAL_TILES) return
+
     setIsMoving(true)
 
     let pos = step
@@ -77,9 +74,21 @@ export default function Game1() {
     setIsMoving(false)
 
     if (pos > 0 && pos <= TOTAL_TILES) {
-      const t = byId.get(pos)?.type
-      const color = colorClassOfEvent(t)
-      if (EVENT_BY_COLOR[color]) setActiveEventColor(color)
+      const isGoal = pos === TOTAL_TILES
+      const GOAL_EVENT_TYPE: EventType = 'branch'
+      const tileEventType: EventType | undefined =
+        isGoal ? GOAL_EVENT_TYPE : byId.get(pos)?.type
+
+      //  ゴールは必ず「条件分岐マス（branch）」イベントを強制発火
+      //  もしAPIが欠けていても branch を出すため、色は branch から算出する
+      const color = colorClassOfEvent(tileEventType)
+      if (color && EVENT_BY_COLOR[color]) {
+        setActiveEventColor(color)
+
+        if (isGoal) {
+          setGoalAwaitingEventClose(true)
+        }
+      }
     }
   }
 
@@ -161,7 +170,18 @@ export default function Game1() {
           imgSrc="/player1.png"
         />
 
-        {EventComp && <EventComp onClose={() => setActiveEventColor(null)} />}
+        {EventComp && (
+          <EventComp
+            onClose={() => {
+              setActiveEventColor(null)
+              if (goalAwaitingEventClose && !goalPushedRef.current) {
+                goalPushedRef.current = true
+                setGoalAwaitingEventClose(false)
+                router.push('/game/2/a')
+              }
+            }}
+          />
+        )}
       </div>
     </div>
   )
