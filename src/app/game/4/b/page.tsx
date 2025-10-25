@@ -1,7 +1,7 @@
 'use client'
 import type { EventType } from '@/app/api/game/type';
 import { EVENT_BY_COLOR } from '@/components/events';
-import Finish from '@/components/events/Finish'; // 共通のゴールUI
+import Finish from '@/components/events/Finish';
 import DiceButton from '@/components/game/DiceButton';
 import DiceOverlay from '@/components/game/DiceOverlay';
 import GameHUD from '@/components/game/GameHUD';
@@ -94,7 +94,6 @@ export default function Game4b() {
           <SettingsMenu sizePct={8} className="w-1/5 z-10" />
         </div>
 
-        {/* 右上の「ゴール」飾り（任意） */}
         <div className="absolute top-[10%] sm:top-[12%] right-[13%] rounded-md bg-brown-default/90 text-white border-2 border-white w-[20%] h-[20%] font-bold text-xl md:text-3xl flex items-center justify-center">
           ゴール
         </div>
@@ -116,7 +115,6 @@ export default function Game4b() {
           onConfirm={(value) => moveBy(value)}
         />
 
-        {/* タイル配置（色は API の type → colorClassOfEvent で反映） */}
         <div
           className="absolute inset-0 grid grid-cols-7 grid-rows-5 px-[8%] pt-[9%] pb-[7%]"
           style={{
@@ -124,25 +122,22 @@ export default function Game4b() {
             gridTemplateRows: '17% 21% 17% 24% 17%',
           }}
         >
-          {/* 下段 1..4 */}
+
           <Tile col={1} row={5} colorClass={colorClassOfEvent(byId.get(1)?.type)} />
           <Tile col={3} row={5} colorClass={colorClassOfEvent(byId.get(2)?.type)} />
           <Tile col={5} row={5} colorClass={colorClassOfEvent(byId.get(3)?.type)} />
           <Tile col={7} row={5} colorClass={colorClassOfEvent(byId.get(4)?.type)} />
 
-          {/* 中段 5..8 */}
           <Tile col={7} row={3} colorClass={colorClassOfEvent(byId.get(5)?.type)} />
           <Tile col={5} row={3} colorClass={colorClassOfEvent(byId.get(6)?.type)} />
           <Tile col={3} row={3} colorClass={colorClassOfEvent(byId.get(7)?.type)} />
           <Tile col={1} row={3} colorClass={colorClassOfEvent(byId.get(8)?.type)} />
 
-          {/* 上段 9..11 */}
           <Tile col={1} row={1} colorClass={colorClassOfEvent(byId.get(9)?.type)} />
           <Tile col={3} row={1} colorClass={colorClassOfEvent(byId.get(10)?.type)} />
           <Tile col={5} row={1} colorClass={colorClassOfEvent(byId.get(11)?.type)} />
         </div>
 
-        {/* プレイヤー */}
         <Player
           col={cur.col}
           row={cur.row}
@@ -155,10 +150,8 @@ export default function Game4b() {
           imgSrc="/player1.png"
         />
 
-        {/* 通常イベント */}
         {EventComp && <EventComp onClose={() => setActiveEventColor(null)} />}
 
-        {/* フィニッシュ（条件分岐なし） */}
         {showFinish && (
           <Finish
             title="ゴール！"
