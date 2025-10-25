@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { login } from "../../services/authService";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { login } from "../../services/authService";
 
 export default function SignIn() {
   const router = useRouter();
@@ -18,6 +18,7 @@ export default function SignIn() {
     try {
       await login(email, password);
       router.push("/"); // ログイン後に遷移
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message);
     }
@@ -81,6 +82,6 @@ export default function SignIn() {
         </div>
       </div>
     </div>
-    
+
   );
 }

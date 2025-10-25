@@ -9,14 +9,11 @@ export async function GET() {
         { tileId: 4,  type: 'money_minus', amount: 500 },
         { tileId: 5,  type: 'money_plus',  amount: 1000 },
         { tileId: 6,  type: 'money_minus', amount: 500 },
-        { tileId: 7,  type: 'money_minus', amount: 500 },
-        { tileId: 8,  type: 'money_plus',  amount: 1000 },
-        { tileId: 9,  type: 'quiz',        questionId: 'Q003' },
-        { tileId: 10, type: 'money_plus',  amount: 1000 },
+        { tileId: 7, type: 'money_minus',  amount: 1000 },
+        { tileId: 8,  type: 'money_minus',  amount: 1000 },
+        { tileId: 9, type: 'money_minus',  amount: 1000 },
+        { tileId: 10, type: 'money_minus',  amount: 1000 },
         { tileId: 11, type: 'money_minus', amount: 500 },
-        { tileId: 12, type: 'money_minus', amount: 500 },
-        { tileId: 13, type: 'money_minus', amount: 500 },
-        { tileId: 14, type: 'branch', variant: 'to_page' },
     ]
 
     const body: EventsResponse = { totalTiles: events.length, events }

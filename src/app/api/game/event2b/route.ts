@@ -14,9 +14,9 @@ export async function GET() {
         { tileId: 9,  type: 'gamble',   min: -2000, max: 2000 },
         { tileId: 10, type: 'money_plus',  amount: 1000 },
         { tileId: 11, type: 'money_minus', amount: 500 },
-        { tileId: 12, type: 'global',   effect: 'all_plus', amount: 500 },
+        { tileId: 12, type: 'branch', variant: 'to_page' },
     ]
-    
+
     const body: EventsResponse = { totalTiles: events.length, events }
     return NextResponse.json(body, { status: 200 })
 }
