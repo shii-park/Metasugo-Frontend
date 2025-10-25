@@ -9,8 +9,11 @@ import SettingsMenu from '@/components/game/SettingMenu'
 import Tile from '@/components/game/Tile'
 import Image from 'next/image'
 import { useState } from 'react'
+import { colorClassOfEvent } from '../../../../lib/game/eventColor'
+import { useEvents } from '../../../../lib/game/useEvents'
 
 export default function Game2a() {
+  const { byId } = useEvents('/api/game/event2a')
   const [isDiceOpen, setIsDiceOpen] = useState(false)
 
   return (
@@ -47,20 +50,80 @@ export default function Game2a() {
             gridTemplateRows: '17% 23.5% 17% 24% 17%',
           }}
         >
-          <Tile col={1} row={5} colorClass='bg-red-default' />
-          <Tile col={3} row={5} colorClass='bg-blue-default' />
-          <Tile col={5} row={5} colorClass='bg-green-default' />
-          <Tile col={7} row={5} colorClass='bg-red-default' />
+          <Tile 
+            col={1}
+            row={5}
+            colorClass={colorClassOfEvent(byId.get(1)?.type)}
+            className='w-full h-full'
+          />
+          <Tile 
+            col={3}
+            row={5}
+            colorClass={colorClassOfEvent(byId.get(2)?.type)}
+            className='w-full h-full'
+          />
+          <Tile 
+            col={5}
+            row={5}
+            colorClass={colorClassOfEvent(byId.get(3)?.type)}
+            className='w-full h-full'
+          />
+          <Tile
+            col={7}
+            row={5}
+            colorClass={colorClassOfEvent(byId.get(4)?.type)}
+            className='w-full h-full'
+          />
 
-          <Tile col={1} row={3} colorClass='bg-blue-default' />
-          <Tile col={3} row={3} colorClass='bg-red-default' />
-          <Tile col={5} row={3} colorClass='bg-red-default' />
-          <Tile col={7} row={3} colorClass='bg-blue-default' />
+          <Tile
+            col={1}
+            row={3}
+            colorClass={colorClassOfEvent(byId.get(5)?.type)}
+            className='w-full h-full'
+          />
+          <Tile
+            col={3}
+            row={3}
+            colorClass={colorClassOfEvent(byId.get(6)?.type)}
+            className='w-full h-full'
+          />
+          <Tile
+            col={5}
+            row={3}
+            colorClass={colorClassOfEvent(byId.get(7)?.type)}
+            className='w-full h-full'
+          />
+          <Tile
+            col={7}
+            row={3}
+            colorClass={colorClassOfEvent(byId.get(8)?.type)}
+            className='w-full h-full'
+          />
 
-          <Tile col={1} row={1} colorClass='bg-yellow-300' />
-          <Tile col={3} row={1} colorClass='bg-blue-default' />
-          <Tile col={5} row={1} colorClass='bg-red-default' />
-          <Tile col={7} row={1} colorClass='bg-gray-300' />
+          <Tile
+            col={1}
+            row={1}
+            colorClass={colorClassOfEvent(byId.get(9)?.type)}
+            className='w-full h-full'
+          />
+          <Tile
+            col={3}
+            row={1}
+            colorClass={colorClassOfEvent(byId.get(10)?.type)}
+            className='w-full h-full'
+          />
+          <Tile
+            col={5}
+            row={1}
+            colorClass={colorClassOfEvent(byId.get(11)?.type)}
+            className='w-full h-full'
+          />
+          <Tile
+            col={7}
+            row={1}
+            colorClass={colorClassOfEvent(byId.get(12)?.type)}
+            className='w-full h-full'
+          />
         </div>
       </div>
     </div>
