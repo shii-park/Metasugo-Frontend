@@ -42,7 +42,7 @@ export default function Game1() {
   const router = useRouter()
   const goalPushedRef = useRef(false)
 
-  const { byId } = useEvents('/api/game/events1')
+  const { byId } = useEvents('/api/game/event1')
 
   const TOTAL_TILES = positions.length
   const [step, setStep] = useState(0)
