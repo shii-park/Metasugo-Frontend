@@ -6,14 +6,20 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 export type DiceOverlayProps = {
   isOpen: boolean
+  onConfirm?: (value: 1 | 2 | 3 | 4 | 5 | 6) => void
   onClose: () => void
-  getDiceValue?: () => Promise<1|2|3|4|5|6> | 1|2|3|4|5|6
+  getDiceValue?: () => Promise<1 | 2 | 3 | 4 | 5 | 6> | 1 | 2 | 3 | 4 | 5 | 6
 }
 
 type DiceFaceValue = 1 | 2 | 3 | 4 | 5 | 6
 
-
-function DiceFace({ value, size = 128 }: { value: DiceFaceValue; size?: number }) {
+function DiceFace({
+  value,
+  size = 128,
+}: {
+  value: DiceFaceValue
+  size?: number
+}) {
   const pos = {
     tl: { cx: 24, cy: 24 },
     tm: { cx: 48, cy: 24 },
@@ -36,16 +42,36 @@ function DiceFace({ value, size = 128 }: { value: DiceFaceValue; size?: number }
   }
 
   return (
-    <svg width={size} height={size} viewBox="0 0 96 96" role="img" aria-label={`サイコロの目は ${value}`}>
-      <rect x="4" y="4" width="88" height="88" rx="14" fill="white" stroke="rgba(0,0,0,0.08)" strokeWidth="2" />
+    <svg
+      width={size}
+      height={size}
+      viewBox='0 0 96 96'
+      role='img'
+      aria-label={`サイコロの目は ${value}`}
+    >
+      <rect
+        x='4'
+        y='4'
+        width='88'
+        height='88'
+        rx='14'
+        fill='white'
+        stroke='rgba(0,0,0,0.08)'
+        strokeWidth='2'
+      />
       {map[value].map((k) => (
-        <circle key={k} cx={pos[k].cx} cy={pos[k].cy} r={8} fill="black" />
+        <circle key={k} cx={pos[k].cx} cy={pos[k].cy} r={8} fill='black' />
       ))}
     </svg>
   )
 }
 
-export default function DiceOverlay({ isOpen, onClose, getDiceValue }: DiceOverlayProps) {
+export default function DiceOverlay({
+  isOpen,
+  onClose,
+  getDiceValue,
+  onConfirm,
+}: DiceOverlayProps) {
   const [isRolling, setIsRolling] = useState(false)
   const [value, setValue] = useState<DiceFaceValue | null>(null)
   const [rollingFace, setRollingFace] = useState<DiceFaceValue>(1)
@@ -99,47 +125,62 @@ export default function DiceOverlay({ isOpen, onClose, getDiceValue }: DiceOverl
     }
   }, [fetchValue])
 
-  const faceToShow: DiceFaceValue = isRolling ? rollingFace : (value ?? rollingFace)
+  const faceToShow: DiceFaceValue = isRolling
+    ? rollingFace
+    : value ?? rollingFace
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          key="overlay"
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/30 backdrop-blur-[2px]"
+          key='overlay'
+          className='fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/30 backdrop-blur-[2px]'
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="rounded-xl bg-blue-default/10 p-6"
+            className='rounded-xl bg-blue-default/10 p-6'
             animate={isRolling ? { rotate: 360 } : { rotate: 0 }}
-            transition={isRolling ? { repeat: Infinity, duration: 0.8, ease: 'linear' } : { duration: 0.4, ease: 'easeOut' }}
+            transition={
+              isRolling
+                ? { repeat: Infinity, duration: 0.8, ease: 'linear' }
+                : { duration: 0.4, ease: 'easeOut' }
+            }
           >
             <DiceFace value={faceToShow} size={160} />
           </motion.div>
 
-          <div className="mt-4 h-8 flex items-center">
+          <div className='mt-4 h-8 flex items-center'>
             {!isRolling && value !== null && (
-              <div className="text-2xl md:text-3xl font-bold text-gray-900">{value}マスすすむ</div>
+              <div className='text-2xl md:text-3xl font-bold text-gray-900'>
+                {value}マスすすむ
+              </div>
             )}
           </div>
 
-          <div className="mt-6">
+          <div className='mt-6'>
             {isRolling ? (
               <button
-                type="button"
+                type='button'
                 onClick={handleStop}
-                className="px-10 py-3 rounded-md bg-blue-default text-white text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-blue-300"
-                aria-label="サイコロを止める"
+                className='px-10 py-3 rounded-md bg-blue-default text-white text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-blue-300'
+                aria-label='サイコロを止める'
               >
                 サイコロを止める
               </button>
             ) : (
               <button
-                type="button"
-                onClick={onClose}
-                className="px-10 py-3 rounded-md bg-blue-default text-white text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-blue-300"
+                type='button'
+                onClick={() => {
+                  // 出目が出ていれば親に通知
+                  if (value !== null) {
+                    // value は DiceFaceValue 型 (= 1..6)
+                    onConfirm?.(value)
+                  }
+                  onClose()
+                }}
+                className='px-10 py-3 rounded-md bg-blue-default text-white text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-blue-300'
               >
                 マップに戻る
               </button>
@@ -147,7 +188,7 @@ export default function DiceOverlay({ isOpen, onClose, getDiceValue }: DiceOverl
           </div>
 
           {error && (
-            <div role="alert" className="mt-3 text-sm text-red-600">
+            <div role='alert' className='mt-3 text-sm text-red-600'>
               {error}
             </div>
           )}

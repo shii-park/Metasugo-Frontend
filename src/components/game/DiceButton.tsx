@@ -4,6 +4,7 @@ type DiceButtonProps = {
   className?: string
   onClick?: () => void
   label?: string
+  disabled?: boolean
 }
 
 export default function DiceButton({
