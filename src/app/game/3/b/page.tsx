@@ -22,11 +22,11 @@ const positions = [
 ]
 const TOTAL_TILES = positions.length
 
-const COLS = [8.5, 14.375, 8.5, 14.375, 8.5, 14.375, 8.5, 12, 8.5]
-const ROWS = [17, 23, 17, 24.5, 17]
-const PAD_X = 6
-const PAD_TOP = 10
-const PAD_BOTTOM = 14
+const COLS = [12, 10.5, 9.5, 11.5, 9.5, 11.65, 9.5, 10.35, 12]
+const ROWS = [18, 8, 18, 12, 18]
+const PAD_X = 10
+const PAD_TOP = 16
+const PAD_BOTTOM = 7
 
 export default function Game3b() {
   const { byId } = useEvents('/api/game/event3b')
@@ -98,10 +98,11 @@ export default function Game3b() {
           onConfirm={(value) => moveBy(value)}
         />
         <div
-          className="absolute inset-0 grid grid-cols-9 grid-rows-5 px-[8%] pt-[9%] pb-[7%]"
+          className="absolute inset-0 grid grid-cols-9 grid-rows-5 px-[10%] pt-[9.5%] pb-[7%]"
           style={{
-            gridTemplateColumns: '8.5% 14.375% 8.5% 14.375% 8.5% 14.375% 8.5% 12% 8.5%',
-            gridTemplateRows: '17% 23% 17% 24.5% 17%',
+            gridTemplateColumns:
+              '9.5% 13.125% 9.5% 13.125% 9.5% 13.125% 9.5% 13.125% 9.5%',
+            gridTemplateRows: '18% 20% 18% 26% 18%',
           }}
         >
           <Tile col={7} row={5} colorClass={colorClassOfEvent(byId.get(1)?.type)} />

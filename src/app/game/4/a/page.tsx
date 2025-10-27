@@ -31,11 +31,11 @@ const positions = [
 const GOAL_STEP = positions.length
 const LAST_TILE = GOAL_STEP - 1
 
-const COLS = [8.5, 15, 8.5, 15, 8.5, 15, 8.5]
-const ROWS = [17, 21, 17, 24, 17]
-const PAD_X = 6
-const PAD_TOP = 10
-const PAD_BOTTOM = 14
+const COLS = [1.75, 12, 5.5, 10.125, 5.5, 5, 15.75]; // %
+const ROWS = [12, 11, 18, 8, 18];        // %
+const PAD_X = 7.2;   // %
+const PAD_TOP = 16;
+const PAD_BOTTOM = 7;
 
 export default function Game4a() {
   const { byId } = useEvents('/api/game/event4a')
@@ -116,10 +116,10 @@ export default function Game4a() {
         />
 
         <div
-          className="absolute inset-0 grid grid-cols-7 grid-rows-5 px-[8%] pt-[9%] pb-[7%]"
+          className="absolute inset-0 grid grid-cols-7 grid-rows-5 px-[8%] pt-[8.5%] pb-[8%]"
           style={{
-            gridTemplateColumns: '8.5% 15% 8.5% 15% 8.5% 15% 8.5%',
-            gridTemplateRows: '17% 21% 17% 24% 17%',
+            gridTemplateColumns: '8.5% 18% 8.5% 18% 8.5% 18% 8.5%',
+            gridTemplateRows: '17% 23.5% 17% 24% 17%',
           }}
         >
           <Tile col={1} row={5} colorClass={colorClassOfEvent(byId.get(1)?.type)} />
@@ -148,7 +148,7 @@ export default function Game4a() {
           label="あなた"
           imgSrc="/player1.png"
         />
-
+        
         {EventComp && <EventComp onClose={() => setActiveEventColor(null)} />}
 
         {showFinish && (
