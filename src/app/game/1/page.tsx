@@ -32,8 +32,8 @@ const positions = [
   { col: 1, row: 1 },
 ]
 
-const COLS = [9.5, 13.125, 9.5, 13.125, 9.5, 13.125, 9.5, 13.125, 9.5]
-const ROWS = [18, 20, 18, 26, 18]
+const COLS = [12, 10.5, 9.5, 11.5, 9.5, 11.5, 9.5, 10.5, 12]
+const ROWS = [18, 8, 18, 12, 18]
 const PAD_X = 10
 const PAD_TOP = 16
 const PAD_BOTTOM = 7
@@ -169,7 +169,7 @@ export default function Game1() {
           label="あなた"
           imgSrc="/player1.png"
         />
-
+        
         {EventComp && (
           <EventComp
             onClose={() => {
