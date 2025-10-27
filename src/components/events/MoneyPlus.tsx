@@ -1,7 +1,6 @@
 // components/events/MoneyMinus.tsx
 'use client'
-import { on } from 'events';
-import React, {useState} from 'react';
+import { useState } from 'react';
 
 const MESSAGES = "6単位売れた\n所持金が200000円増えた";
 
@@ -26,13 +25,13 @@ export default function MoneyPlus({ onClose}: Props) {
       <div className="absolute z-50 left-[5%] right-[5%] bottom-[6%]">
         <div className="rounded-xl border-2 border-white/90 bg-white/90 backdrop-blur-sm shadow-lg p-4 md:p-5">
           {isTitleOnly ? (
-            <p className="font-bold mb-2 text-[#5B7BA6]">【お金減少マス】</p>
+            <p className="font-bold mb-2 text-[#5B7BA6]">【お金増加マス】</p>
           ) : (
           <div className="font-bold text-sm md:text-base text-[#5B7BA6]">
             {contentLines.map((line, index) => (
               <p key={index}>{line}</p>
             ))}
-          </div>  
+          </div>
           )}
         </div>
         <div className="relative">
