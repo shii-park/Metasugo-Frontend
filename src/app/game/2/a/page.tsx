@@ -23,11 +23,11 @@ const positions = [
   { col: 1, row: 1 }, { col: 3, row: 1 }, { col: 5, row: 1 }, { col: 7, row: 1 },
 ]
 
-const COLS = [7, 17.8, 7, 17.8, 7, 17.8, 7]; // %
-const ROWS = [10, 24.2, 10, 24.2, 10];        // %
+const COLS = [1.75, 12, 5.5, 10.125, 5.5, 5, 15.75]; // %
+const ROWS = [12, 11, 18, 8, 18];        // %
 const PAD_X = 7.2;   // %
-const PAD_TOP = 10.5;
-const PAD_BOTTOM = 14.0;
+const PAD_TOP = 16;
+const PAD_BOTTOM = 7;
 
 
 export default function Game2a() {
@@ -143,7 +143,7 @@ export default function Game2a() {
           label="あなた"
           imgSrc="/player1.png"
         />
-
+        
         {/* イベント */}
         {EventComp && (
           <EventComp
