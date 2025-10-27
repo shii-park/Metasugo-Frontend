@@ -32,7 +32,7 @@ const positions = [
   { col: 1, row: 1 },
 ]
 
-const COLS = [12, 10.5, 9.5, 11.5, 9.5, 11.5, 9.5, 10.5, 12]
+const COLS = [12, 10.5, 9.5, 11.5, 9.5, 11.65, 9.5, 10.35, 12]
 const ROWS = [18, 8, 18, 12, 18]
 const PAD_X = 10
 const PAD_TOP = 16
