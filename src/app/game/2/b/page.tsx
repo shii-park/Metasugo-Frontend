@@ -19,11 +19,11 @@ const positions = [
   { col: 7, row: 3 }, { col: 5, row: 3 }, { col: 3, row: 3 }, { col: 1, row: 3 },
   { col: 1, row: 1 }, { col: 3, row: 1 }, { col: 5, row: 1 }, { col: 7, row: 1 },
 ]
-const COLS = [8.5, 18, 8.5, 18, 8.5, 18, 8.5]
-const ROWS = [17, 23.5, 17, 24, 17]
-const PAD_X = 8
-const PAD_TOP = 12
-const PAD_BOTTOM = 8
+const COLS = [1.75, 12, 5.5, 10.125, 5.5, 5, 15.75]; // %
+const ROWS = [12, 11, 18, 8, 18];        // %
+const PAD_X = 7.2;   // %
+const PAD_TOP = 16;
+const PAD_BOTTOM = 7;
 
 export default function Game2b() {
   const { byId } = useEvents('/api/game/event2b')
