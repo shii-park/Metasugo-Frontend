@@ -42,7 +42,7 @@ function MoneyPill({ children }: { children: React.ReactNode }) {
         'shadow-sm',
         'text-blue-default',
         'font-bold',
-        'text-[clamp(14px,2.2vw,24px)] leading-none',
+        'text-[1.7vw] leading-none',
         'tabular-nums',
       ].join(' ')}
       aria-live='polite'
