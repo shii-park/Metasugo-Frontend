@@ -2,7 +2,7 @@
 'use client'
 import { useState } from 'react';
 
-const MESSAGES = "友達がパチンコに負けた\n2000円あげた";
+const MESSAGES = "右隣にいる人にお金を渡す\n2000円減った";
 
 type Props = {
   onClose: () => void;
