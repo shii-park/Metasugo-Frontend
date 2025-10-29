@@ -18,9 +18,14 @@ export default function SignIn() {
     try {
       await login(email, password);
       router.push("/"); // ログイン後に遷移
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err.message);
+      const message =
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/wrong-password"
+          ? "メールアドレスまたはパスワードが間違っています。"
+          : err.message;
+      setError(message);
     }
   };
 
@@ -42,6 +47,14 @@ export default function SignIn() {
               <div className="font-bold text-3xl text-[#5B7BA6] flex items-center justify-center mb-8">
                 ログイン
               </div>
+
+              {/* エラーメッセージ */}
+              {error && (
+                <div className="text-red-500 text-center text-sm mb-1">
+                  {error}
+                </div>
+              )}
+
               <div className="flex items-center justify-center py-2 px-4">
                 <input
                   type="email"
@@ -71,6 +84,7 @@ export default function SignIn() {
                 </Link>
               </div>
             </form>
+
             <div>
               <img
                 src="/dice.png"
@@ -82,6 +96,5 @@ export default function SignIn() {
         </div>
       </div>
     </div>
-
   );
 }
