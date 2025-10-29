@@ -7,10 +7,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 type Choice = 'a' | 'b'
 type BranchProps = { onClose?: () => void }
 
-const PAGE_COPY: Record<number, { title: string; message: string }> = {
-  1: { title: '【条件分岐マス：1ページ目】', message: 'AかBを選んで次のページへ進みます。' },
-  2: { title: '【条件分岐マス：2ページ目】', message: 'AかBを選んで次のページへ進みます。' },
-  3: { title: '【条件分岐マス：3ページ目】', message: 'AかBを選んで次のページへ進みます。' },
+const PAGE_COPY: Record<number, { title: string;}> = {
+  1: { title: '【条件分岐マス：1ページ目】'},
+  2: { title: '【条件分岐マス：2ページ目】'},
+  3: { title: '【条件分岐マス：3ページ目】'},
 }
 
 // /game/<page>/<a|b> から page を抜く（末尾スラッシュやクエリがあってもOK）
@@ -40,6 +40,11 @@ export default function Branch({ onClose }: BranchProps) {
   const currentPage = useMemo<number>(() => getCurrentPageFromPath(pathname), [pathname])
   const nextPage = useMemo<number>(() => currentPage + 1, [currentPage])
 
+  const [showContent, setShowContent] = useState(false)
+
+  const [finalChoice, setFinalChoice] = useState<Choice | null>(null);
+  const [resultMessage, setResultMessage] = useState<string | null>(null);
+
   useEffect(() => {
     void router.prefetch(`/game/${nextPage}/a`)
     void router.prefetch(`/game/${nextPage}/b`)
@@ -53,49 +58,83 @@ export default function Branch({ onClose }: BranchProps) {
   const [submitting, setSubmitting] = useState(false)
   const handledRef = useRef(false)
 
+  const handleAdvance = () => {
+    if (!showContent && !resultMessage){
+      setShowContent(true);
+    }else if (!showContent && resultMessage){
+      setRouting(true);
+      onClose?.();
+      if(finalChoice){
+        router.push(`/game/${nextPage}/${finalChoice}`);
+      }else{
+        router.push(`/game/${nextPage}/a`);
+      }
+    }
+  };
+
   const go = (choice: Choice) => {
     if (submitting || handledRef.current) return
     handledRef.current = true
     setSubmitting(true)
 
-    setRouting(true)
+    setFinalChoice(choice);
+    setResultMessage('○○によって○○');
+    setShowContent(false);
+
+    // setRouting(true)
     incrementBranch()
-    onClose?.()
-    router.push(`/game/${nextPage}/${choice}`)
   }
 
+  const isTitleOnly = !showContent
+
   return (
-    <div className="absolute z-50 left-[5%] right-[5%] bottom-[6%]">
-      <div className="rounded-xl border-2 border-white/90 bg-white/90 backdrop-blur-sm shadow-lg p-4 md:p-5">
-        <p className="font-bold mb-2">{copy.title}</p>
-        <p className="text-sm md:text-base">{copy.message}</p>
-
-        <div className="mt-3 flex gap-2">
-          <button
-            type="button"
-            className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-60"
-            onClick={() => go('a')}
-            aria-label="A で次ページへ進む"
-            disabled={submitting}
-          >
-            Aで進む
-          </button>
-          <button
-            type="button"
-            className="px-4 py-2 rounded bg-green-600 text-white disabled:opacity-60"
-            onClick={() => go('b')}
-            aria-label="B で次ページへ進む"
-            disabled={submitting}
-          >
-            Bで進む
-          </button>
-        </div>
-      </div>
-
-      {/* 吹き出し三角 */}
+    <div className='absolute z-50 inset-0 cursor-pointer' onClick={isTitleOnly ? handleAdvance : undefined}>
+        {isTitleOnly ? (
+          <div className="absolute z-50 left-[5%] right-[5%] bottom-[6%]">
+          <div className="rounded-xl border-2 border-black/90 bg-white/90 backdrop-blur-sm shadow-lg p-4 md:p-5">
+            <p className="font-bold mb-2 text-[#5B7BA6] text-2xl">{resultMessage ?? copy.title}</p>
+          </div>
+          </div>
+        ) : (
+          <div className='flex justify-center items-center w-full h-full'>
+            <div className="rounded-[6] border-2 border-black/90 bg-white/90 backdrop-blur-sm shadow-lg p-5 w-5/8">
+              <p className="font-bold mb-2 text-[#5B7BA6] text-2xl p-5 text-center">
+                選択肢を教室内から探し出そう
+              </p>
+              <div className="rounded-xl border-2  bg-[#ccb173] backdrop-blur-sm shadow-lg md:p-5  text-center">
+                <button
+                  type="button"
+                  className="flex font-bold mb-2 text-white text-2xl w-full items-center justify-center"
+                  onClick={() => go('a')}
+                  aria-label="A で次ページへ進む"
+                  disabled={submitting}
+                >
+                  <img
+                    src="/QR_example.svg"
+                    alt="QRコード"
+                    className=" pr-[8%]"
+                  />
+                  QRコードを読み取る
+                </button>
+              </div>
+              <div className="rounded-xl border-2  bg-[#ccb173] backdrop-blur-sm shadow-lg p-5  text-center">
+                <button
+                  type="button" 
+                  className="font-bold mb-2 text-white text-2xl"
+                  onClick={() => go('b')}
+                  aria-label="B で次ページへ進む"
+                  disabled={submitting}
+                >
+                  スキップする
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       <div className="relative">
         <div className="absolute right-8 -mt-1 w-0 h-0 border-l-[10px] border-l-transparent border-t-[12px] border-t-white/90 border-r-[10px] border-r-transparent" />
       </div>
     </div>
   )
 }
+
