@@ -14,8 +14,9 @@ import SettingsMenu from '@/components/game/SettingMenu'
 import Tile from '@/components/game/Tile'
 
 import { colorClassOfEvent } from '@/lib/game/eventColor'
+import { kindToEventType } from '@/lib/game/kindMap'
 import { useGameStore } from '@/lib/game/store'
-import { useEvents } from '@/lib/game/useEvents'
+import { useTiles } from '@/lib/game/useTiles'
 import { connectGameSocket, GameSocketConnection } from '@/lib/game/wsClient'
 
 const START_POS = { col: 7, row: 5 }
@@ -47,40 +48,35 @@ export default function Game1() {
   const router = useRouter()
   const goalPushedRef = useRef(false)
 
-  const { byId } = useEvents('/api/game/event1')
-  const TOTAL_TILES = positions.length
+  const { byId: tileById, tiles } = useTiles()
+  // 盤面座標(positions)の数を上限にして安全化
+  const TOTAL_TILES = Math.min(
+    positions.length,
+    tiles?.length ?? positions.length,
+  )
 
-  // サーバー側でも使われてる想定の自分のID
   const SELF_USER_ID = 'TestUser'
 
-  /**
-   * step:
-   *   フロント視点で「今このマスにいるはず」（1,2,3,...）
-   *   0 はスタート地点（描画的には START_POS）。
-   */
   const [step, setStep] = useState(0)
 
   // サーバーが公式に教えてくれた "お前はタイルID X にいるよ" を覚える場所
   const [serverTileID, setServerTileID] = useState<number | null>(null)
 
-  // サイコロUI
   const [isDiceOpen, setIsDiceOpen] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
   const [lastDiceResult, setLastDiceResult] = useState<
     1 | 2 | 3 | 4 | 5 | 6 | null
   >(null)
 
-  // イベントUI
   const [activeEventColor, setActiveEventColor] = useState<string | null>(null)
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
   // 「このターンの最終着地はここになるはず」とフロントが思ってる場所
-  const [expectedFinalStep, setExpectedFinalStep] = useState<number | null>(
-    null,
-  )
+  const [, setExpectedFinalStep] = useState<number | null>(null)
+  const [money, setMoney] = useState<number>(10000)
 
-  // (分岐マス用UIはまだこのままでOK。不要なら削ってもいい)
+  // (分岐マス用UI)
   const [branchChoice, setBranchChoice] = useState<{
     tileID: number
     options: number[]
@@ -104,7 +100,6 @@ export default function Game1() {
     console.log('[Game1] lastDiceResult changed:', lastDiceResult)
   }, [lastDiceResult])
 
-  // ★ NEW: サーバーが認識している現在タイルIDが変わったらログ出す
   useEffect(() => {
     if (serverTileID !== null) {
       console.log(
@@ -114,7 +109,6 @@ export default function Game1() {
     }
   }, [serverTileID])
 
-  // ★ 参考: step 側もログると、フロント内での位置も見やすい
   useEffect(() => {
     console.log('[Game1] step (client local position) changed:', step)
   }, [step])
@@ -126,9 +120,7 @@ export default function Game1() {
     wsRef.current = connectGameSocket({
       onDiceResult: (userID, diceValue) => {
         console.log('[WS] onDiceResult:', { userID, diceValue })
-
         if (userID !== SELF_USER_ID) return
-
         const v = Math.max(1, Math.min(6, Math.floor(diceValue))) as
           | 1
           | 2
@@ -136,29 +128,42 @@ export default function Game1() {
           | 4
           | 5
           | 6
-
         setLastDiceResult(v)
       },
 
       onQuizRequired: (tileID, quizData) => {
         console.log('[WS] QUIZ_REQUIRED:', { tileID, quizData })
         useGameStore.getState().setQuizReq({ tileID, quizData })
-        // ここでイベントモーダルを確実に表示させたい場合だけ（任意）
-        // setActiveEventColor(colorClassOfEvent("quiz" as EventType));
+        // 必要なら: setActiveEventColor(colorClassOfEvent('quiz' as EventType))
+      },
+
+      onMoneyChanged: (userID, newMoney) => {
+        if (userID !== SELF_USER_ID) return
+        console.log('[WS] MONEY_CHANGED for me:', newMoney)
+
+        setMoney((prev) => {
+          const delta = newMoney - prev
+          if (delta !== 0) {
+            useGameStore.getState().setMoneyChange({ delta })
+          }
+          return newMoney
+        })
+      },
+
+      onGambleResult: (userID, _d, _c, _won, amount, newMoney) => {
+        if (userID !== SELF_USER_ID) return
+        if (amount !== 0) {
+          useGameStore.getState().setMoneyChange({ delta: amount })
+        }
+
+        setMoney(newMoney)
       },
 
       onPlayerMoved: (userID, newPosition) => {
         console.log('[WS] onPlayerMoved:', { userID, newPosition })
-
         if (userID !== SELF_USER_ID) return
-
-        // フロントの表示位置をサーバーに合わせる
-        setStep(newPosition)
-
-        // サーバーが思ってる現在地タイルIDを保持
-        setServerTileID(newPosition)
-
-        // ズレの検証（デバッグ用）
+        setStep(newPosition) // フロント位置をサーバーに合わせる
+        setServerTileID(newPosition) // 現在地タイルIDを保持
         setExpectedFinalStep((prev) => {
           if (prev !== null && prev !== newPosition) {
             console.warn('[WS] position mismatch!', {
@@ -181,7 +186,6 @@ export default function Game1() {
       wsRef.current?.close()
       wsRef.current = null
     }
-    // 依存は空配列！！これでマウント時に一回だけ接続する
   }, [])
 
   // ===== コマを進める（フロント側のアニメーション） =====
@@ -214,8 +218,7 @@ export default function Game1() {
     setIsMoving(false)
     console.log('[Game1] moveBy done. final pos=', pos)
 
-    // 「サーバー的にも最終的にここにいるはず」と覚えておく
-    setExpectedFinalStep(pos)
+    setExpectedFinalStep(pos) // サーバー想定とのズレ検証用
 
     // タイルイベント（色のやつなど）
     if (pos > 0 && pos <= TOTAL_TILES) {
@@ -223,16 +226,14 @@ export default function Game1() {
       const GOAL_EVENT_TYPE: EventType = 'branch'
       const tileEventType: EventType | undefined = isGoal
         ? GOAL_EVENT_TYPE
-        : byId.get(pos)?.type
+        : kindToEventType(tileById.get(pos)?.kind)
 
       const color = colorClassOfEvent(tileEventType)
       console.log('[Game1] tileEventType=', tileEventType, 'color=', color)
 
       if (color && EVENT_BY_COLOR[color]) {
         setActiveEventColor(color)
-        if (isGoal) {
-          setGoalAwaitingEventClose(true)
-        }
+        if (isGoal) setGoalAwaitingEventClose(true)
       }
     }
   }
@@ -246,10 +247,7 @@ export default function Game1() {
       return
     }
 
-    // 出目オーバーレイを開く
     setIsDiceOpen(true)
-
-    // 前回状態クリア
     setLastDiceResult(null)
     setExpectedFinalStep(null)
 
@@ -273,6 +271,9 @@ export default function Game1() {
     setBranchChoice(null)
   }
 
+  const colorOf = (id: number) =>
+    colorClassOfEvent(kindToEventType(tileById.get(id)?.kind))
+
   return (
     <div className='relative w-full h-[100dvh] bg-brown-light grid place-items-center'>
       <div className='relative aspect-[16/9] w-[min(100vw,calc(100dvh*16/9))] overflow-hidden'>
@@ -287,8 +288,8 @@ export default function Game1() {
         />
 
         <GameHUD
-          money={10000}
-          remaining={50}
+          money={money}
+          remaining={TOTAL_TILES - step}
           className='w-full absolute top-[3%] left-[3%]'
         />
 
@@ -328,81 +329,81 @@ export default function Game1() {
           <Tile
             col={5}
             row={5}
-            colorClass={colorClassOfEvent(byId.get(1)?.type)}
+            colorClass={colorOf(1)}
             className='w-full h-full'
           />
           <Tile
             col={3}
             row={5}
-            colorClass={colorClassOfEvent(byId.get(2)?.type)}
+            colorClass={colorOf(2)}
             className='w-full h-full'
           />
           <Tile
             col={1}
             row={5}
-            colorClass={colorClassOfEvent(byId.get(3)?.type)}
+            colorClass={colorOf(3)}
             className='w-full h-full'
           />
 
           <Tile
             col={1}
             row={3}
-            colorClass={colorClassOfEvent(byId.get(4)?.type)}
+            colorClass={colorOf(4)}
             className='w-full h-full'
           />
           <Tile
             col={3}
             row={3}
-            colorClass={colorClassOfEvent(byId.get(5)?.type)}
+            colorClass={colorOf(5)}
             className='w-full h-full'
           />
           <Tile
             col={5}
             row={3}
-            colorClass={colorClassOfEvent(byId.get(6)?.type)}
+            colorClass={colorOf(6)}
             className='w-full h-full'
           />
           <Tile
             col={7}
             row={3}
-            colorClass={colorClassOfEvent(byId.get(7)?.type)}
+            colorClass={colorOf(7)}
             className='w-full h-full'
           />
           <Tile
             col={9}
             row={3}
-            colorClass={colorClassOfEvent(byId.get(8)?.type)}
+            colorClass={colorOf(8)}
             className='w-full h-full'
           />
 
           <Tile
             col={9}
             row={1}
-            colorClass={colorClassOfEvent(byId.get(9)?.type)}
+            colorClass={colorOf(9)}
             className='w-full h-full'
           />
           <Tile
             col={7}
             row={1}
-            colorClass={colorClassOfEvent(byId.get(10)?.type)}
+            colorClass={colorOf(10)}
             className='w-full h-full'
           />
           <Tile
             col={5}
             row={1}
-            colorClass={colorClassOfEvent(byId.get(11)?.type)}
+            colorClass={colorOf(11)}
             className='w-full h-full'
           />
           <Tile
             col={3}
             row={1}
-            colorClass={colorClassOfEvent(byId.get(12)?.type)}
+            colorClass={colorOf(12)}
             className='w-full h-full'
           />
           <Tile
             col={1}
             row={1}
-            colorClass={colorClassOfEvent(byId.get(13)?.type)}
+            colorClass={colorOf(13)}
             className='w-full h-full'
           />
         </div>
@@ -439,7 +440,7 @@ export default function Game1() {
           />
         )}
 
-        {/* 分岐マスの仮UI（あとでちゃんとしたUIに差し替え可） */}
+        {/* 分岐マスの仮UI */}
         {branchChoice && (
           <div className='absolute inset-0 z-[200] flex items-center justify-center bg-black/40 text-white'>
             <div className='bg-brown-default border-2 border-white p-4 rounded-md text-center'>

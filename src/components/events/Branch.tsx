@@ -44,7 +44,7 @@ export default function Branch({ onClose }: BranchProps) {
   const nextPage = useMemo<number>(() => currentPage + 1, [currentPage])
 
   const [showContent, setShowContent] = useState(false)
-  const [finalChoice, setFinalChoice] = useState<Choice | null>(null)
+  const [, setFinalChoice] = useState<Choice | null>(null)
   const [resultMessage, setResultMessage] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const handledRef = useRef(false)

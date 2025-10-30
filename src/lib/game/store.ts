@@ -1,8 +1,9 @@
 // src/lib/game/store.ts
-import type { QuizData } from "@/lib/game/wsClient";
+import type { QuizData } from '@/lib/game/wsClient';
 import { create } from 'zustand';
 
-type QuizReq = { tileID: number; quizData: QuizData } | null;
+type QuizReq = { tileID: number; quizData: QuizData } | null
+type MoneyChange = { delta: number } | null
 
 export type GameState = {
   branchCount: number
@@ -10,10 +11,13 @@ export type GameState = {
   isRouting: boolean
   setRouting: (v: boolean) => void
 
-  // ★ 追加: サーバから要求されたクイズ
   quizReq: QuizReq
-  setQuizReq: (q: QuizReq) => void
+  setQuizReq: (q: QuizReq) => void         // ←そのままでもOK（nullはclearで消す運用）
   clearQuizReq: () => void
+
+  moneyChange: MoneyChange
+  setMoneyChange: (v: NonNullable<MoneyChange>) => void
+  clearMoneyChange: () => void
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -23,8 +27,12 @@ export const useGameStore = create<GameState>((set) => ({
   isRouting: false,
   setRouting: (v) => set({ isRouting: v }),
 
-  // ★ 追加
   quizReq: null,
   setQuizReq: (q) => set({ quizReq: q }),
   clearQuizReq: () => set({ quizReq: null }),
+
+  // ★ ここを追加
+  moneyChange: null,
+  setMoneyChange: (v) => set({ moneyChange: v }),
+  clearMoneyChange: () => set({ moneyChange: null }),
 }))
