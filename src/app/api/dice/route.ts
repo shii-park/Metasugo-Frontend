@@ -4,17 +4,17 @@ export const dynamic = 'force-dynamic'
 let idx = 0
 const sequence = [1, 2, 3, 4, 5, 6] as const
 
-export async function GET() {
-  await new Promise((r) => setTimeout(r, 500))
-
-  const value = sequence[idx % sequence.length]
-  idx += 1
-
-  // 本番側の形に合わせて { value: number } を返す
-  return NextResponse.json({ value })
-}
-
 // export async function GET() {
-//   await new Promise((r) => setTimeout(r, 300))
-//   return NextResponse.json({ value: 1 })  // 常に1
+//   await new Promise((r) => setTimeout(r, 500))
+
+//   const value = sequence[idx % sequence.length]
+//   idx += 1
+
+//   // 本番側の形に合わせて { value: number } を返す
+//   return NextResponse.json({ value })
 // }
+
+export async function GET() {
+  await new Promise((r) => setTimeout(r, 300))
+  return NextResponse.json({ value: 6 })  // 常に1
+}

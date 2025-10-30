@@ -77,10 +77,10 @@ export default function Game1() {
   const [money, setMoney] = useState<number>(10000)
 
   // (分岐マス用UI)
-  const [branchChoice, setBranchChoice] = useState<{
-    tileID: number
-    options: number[]
-  } | null>(null)
+  // const [branchChoice, setBranchChoice] = useState<{
+  //   tileID: number
+  //   options: number[]
+  // } | null>(null)
 
   // WebSocketコネクション保持
   const wsRef = useRef<GameSocketConnection | null>(null)
@@ -116,6 +116,8 @@ export default function Game1() {
   // ===== WebSocket接続とハンドラ登録 =====
   useEffect(() => {
     console.log('[Game1] mounting, connectGameSocket()呼ぶよ')
+
+    const storeActions = useGameStore.getState();
 
     wsRef.current = connectGameSocket({
       onDiceResult: (userID, diceValue) => {
@@ -164,20 +166,23 @@ export default function Game1() {
         if (userID !== SELF_USER_ID) return
         setStep(newPosition) // フロント位置をサーバーに合わせる
         setServerTileID(newPosition) // 現在地タイルIDを保持
+
+        storeActions.clearBranchReq();
+
         setExpectedFinalStep((prev) => {
-          if (prev !== null && prev !== newPosition) {
+          /*if (prev !== null && prev !== newPosition) {
             console.warn('[WS] position mismatch!', {
               expectedFinalStep: prev,
               serverStep: newPosition,
             })
-          }
+          } */
           return null
         })
       },
 
       onBranchChoiceRequired: (tileID, options) => {
         console.log('[WS] onBranchChoiceRequired:', { tileID, options })
-        setBranchChoice({ tileID, options })
+        storeActions.setBranchReq({ tileID, options });
       },
     })
 
@@ -268,11 +273,15 @@ export default function Game1() {
   function handleChooseBranch(selectionTileID: number) {
     console.log('[Game1] handleChooseBranch selectionTileID=', selectionTileID)
     wsRef.current?.sendSubmitChoice(selectionTileID)
-    setBranchChoice(null)
+    useGameStore.getState().clearBranchReq();
+    // setBranchChoice(null)
   }
 
   const colorOf = (id: number) =>
     colorClassOfEvent(kindToEventType(tileById.get(id)?.kind))
+
+
+  const branchReq = useGameStore((state) => state.branchReq);
 
   return (
     <div className='relative w-full h-[100dvh] bg-brown-light grid place-items-center'>
@@ -441,14 +450,14 @@ export default function Game1() {
         )}
 
         {/* 分岐マスの仮UI */}
-        {branchChoice && (
+        {branchReq && (
           <div className='absolute inset-0 z-[200] flex items-center justify-center bg-black/40 text-white'>
             <div className='bg-brown-default border-2 border-white p-4 rounded-md text-center'>
               <div className='font-bold mb-2'>
-                分岐マス {branchChoice.tileID}！どっちに進む？
+                分岐マス {branchReq.tileID}！どっちに進む？
               </div>
               <div className='flex flex-col gap-2'>
-                {branchChoice.options.map((opt) => (
+                {branchReq.options.map((opt) => (
                   <button
                     key={opt}
                     onClick={() => handleChooseBranch(opt)}

@@ -5,6 +5,8 @@ import { create } from 'zustand';
 type QuizReq = { tileID: number; quizData: QuizData } | null
 type MoneyChange = { delta: number } | null
 
+export type BranchReq = {tileID: number; options: number[]} | null;
+
 export type GameState = {
   branchCount: number
   incrementBranch: () => void
@@ -15,9 +17,15 @@ export type GameState = {
   setQuizReq: (q: QuizReq) => void         // ←そのままでもOK（nullはclearで消す運用）
   clearQuizReq: () => void
 
+  branchReq: BranchReq
+  setBranchReq: (b: NonNullable<BranchReq>) => void
+  clearBranchReq: () => void
+
   moneyChange: MoneyChange
   setMoneyChange: (v: NonNullable<MoneyChange>) => void
   clearMoneyChange: () => void
+
+
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -30,6 +38,10 @@ export const useGameStore = create<GameState>((set) => ({
   quizReq: null,
   setQuizReq: (q) => set({ quizReq: q }),
   clearQuizReq: () => set({ quizReq: null }),
+
+  branchReq: null,
+  setBranchReq: (b) => set({ branchReq: b}),
+  clearBranchReq: () => set({ branchReq: null}),
 
   // ★ ここを追加
   moneyChange: null,

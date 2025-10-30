@@ -1,6 +1,7 @@
 'use client'
 
 import { useGameStore } from '@/lib/game/store';
+import { getActiveSocket } from '@/lib/game/wsClient';
 import jsQR from 'jsqr';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -63,15 +64,28 @@ export default function Branch({ onClose }: BranchProps) {
 };
 
   const handleCodeDetection = (data: string) => {
-    // 検出後のカメラ停止ロジック
     stopCamera();
     setIsCameraActive(false);
 
     const correctAnswwers = PAGE_COPY[currentPage]?.ans;
     const isCorrect = correctAnswwers?.some(ans => ans.toLowerCase() === data.toLocaleLowerCase()) ?? false;
 
-    const finalChoice: Choice = isCorrect ? 'a' : 'b';
+    const branchReq = useGameStore.getState().branchReq;
+    const socket = getActiveSocket();
 
+    if(!branchReq || branchReq.options.length < 2 || !socket){
+        console.error("データ不足");
+        setResultMessage("エラー発生");
+        return;
+    }
+
+    const selectedTileID: number = isCorrect
+        ? branchReq.options[0]
+        : branchReq.options[1]
+    
+        socket.sendSubmitChoice(selectedTileID);
+
+    socket.sendSubmitChoice(selectedTileID);
 
     const finalMessage = isCorrect
         ? `QRコード「${data}」を読み取りました。正解です！`
