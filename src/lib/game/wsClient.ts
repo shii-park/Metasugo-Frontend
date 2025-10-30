@@ -1,5 +1,3 @@
-// src/lib/game/wsClient.ts
-
 /**
  * WebSocketクライアント (フロント側)
  *
@@ -124,6 +122,9 @@ export type ErrorMessage = {
   payload: ErrorPayload;
 };
 
+export type QuizData = QuizRequiredPayload["quizData"];
+export type GambleChoice = "High" | "Low";
+
 /**
  * サーバーから届きうる全てのメッセージ
  * (discriminated union)
@@ -187,38 +188,16 @@ export type OutgoingClientMessage =
   | SubmitGambleMessage;
 
 /* ============================
- * ハンドラ達
+ * ハンドラ達（全部オプショナル）
  * ============================
- *
- * それぞれ「そのイベントが来たときにフロント側でどうするか」を
- * Game1などのコンポーネントから渡してもらう。
- *
- * まだ使わないイベントもあるので全部オプショナルにしてある。
  */
-
 export type GameSocketHandlers = {
-  // サイコロ結果
   onDiceResult?: (userID: string, diceResult: number) => void;
-
-  // 公式のプレイヤー座標更新
   onPlayerMoved?: (userID: string, newPosition: number) => void;
-
-  // 所持金が変わった
   onMoneyChanged?: (userID: string, newMoney: number) => void;
-
-  // 分岐マスにいて選択肢を提示する
   onBranchChoiceRequired?: (tileID: number, options: number[]) => void;
-
-  // クイズマス
-  onQuizRequired?: (
-    tileID: number,
-    quizData: QuizRequiredPayload["quizData"]
-  ) => void;
-
-  // ギャンブルマスでベット内容を要求
+  onQuizRequired?: (tileID: number, quizData: QuizRequiredPayload["quizData"]) => void;
   onGambleRequired?: (tileID: number, referenceValue: number) => void;
-
-  // ギャンブル結果
   onGambleResult?: (
     userID: string,
     diceResult: number,
@@ -227,18 +206,8 @@ export type GameSocketHandlers = {
     amount: number,
     newMoney: number
   ) => void;
-
-  // ゴールした
   onPlayerFinished?: (userID: string, money: number) => void;
-
-  // ステータス変化（結婚した・子供できた・職業変わった 等）
-  onPlayerStatusChanged?: (
-    userID: string,
-    status: string,
-    value: boolean | string | number | null
-  ) => void;
-
-  // サーバーからのエラー通知
+  onPlayerStatusChanged?: (userID: string, status: string, value: boolean | string | number | null) => void;
   onErrorMessage?: (message: string) => void;
 };
 
@@ -255,6 +224,17 @@ export type GameSocketConnection = {
 };
 
 /* ============================
+ * アクティブ接続の取得API
+ * ============================
+ */
+let _activeSocket: GameSocketConnection | null = null;
+
+/** 現在アクティブな WebSocket コネクションを返す（未接続なら null） */
+export function getActiveSocket(): GameSocketConnection | null {
+  return _activeSocket;
+}
+
+/* ============================
  * WebSocket 接続本体
  * ============================
  *
@@ -263,9 +243,7 @@ export type GameSocketConnection = {
  * - まだopenじゃない状態で send されたメッセージはキューに積む
  * - open後にまとめて flush
  */
-export function connectGameSocket(
-  handlers: GameSocketHandlers
-): GameSocketConnection {
+export function connectGameSocket(handlers: GameSocketHandlers): GameSocketConnection {
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? "";
   const ws = new WebSocket(wsUrl);
 
@@ -304,94 +282,72 @@ export function connectGameSocket(
       return;
     }
 
-    // `never` 回避のため、まずは type を string として取り出してから分岐
     const msgType: string = parsed.type;
 
-    // DICE_RESULT
     if (msgType === "DICE_RESULT") {
       const p = (parsed as DiceResultMessage).payload;
       handlers.onDiceResult?.(p.userID, p.diceResult);
       return;
     }
 
-    // PLAYER_MOVED
     if (msgType === "PLAYER_MOVED") {
       const p = (parsed as PlayerMovedMessage).payload;
       handlers.onPlayerMoved?.(p.userID, p.newPosition);
       return;
     }
 
-    // MONEY_CHANGED
     if (msgType === "MONEY_CHANGED") {
       const p = (parsed as MoneyChangedMessage).payload;
       handlers.onMoneyChanged?.(p.userID, p.newMoney);
       return;
     }
 
-    // BRANCH_CHOICE_REQUIRED
     if (msgType === "BRANCH_CHOICE_REQUIRED") {
       const p = (parsed as BranchChoiceRequiredMessage).payload;
       handlers.onBranchChoiceRequired?.(p.tileID, p.options);
       return;
     }
 
-    // QUIZ_REQUIRED
     if (msgType === "QUIZ_REQUIRED") {
       const p = (parsed as QuizRequiredMessage).payload;
       handlers.onQuizRequired?.(p.tileID, p.quizData);
       return;
     }
 
-    // GAMBLE_REQUIRED
     if (msgType === "GAMBLE_REQUIRED") {
       const p = (parsed as GambleRequiredMessage).payload;
       handlers.onGambleRequired?.(p.tileID, p.referenceValue);
       return;
     }
 
-    // GAMBLE_RESULT
     if (msgType === "GAMBLE_RESULT") {
       const p = (parsed as GambleResultMessage).payload;
-      handlers.onGambleResult?.(
-        p.userID,
-        p.diceResult,
-        p.choice,
-        p.won,
-        p.amount,
-        p.newMoney
-      );
+      handlers.onGambleResult?.(p.userID, p.diceResult, p.choice, p.won, p.amount, p.newMoney);
       return;
     }
 
-    // PLAYER_FINISHED
     if (msgType === "PLAYER_FINISHED") {
       const p = (parsed as PlayerFinishedMessage).payload;
       handlers.onPlayerFinished?.(p.userID, p.money);
       return;
     }
 
-    // PLAYER_STATUS_CHANGED
     if (msgType === "PLAYER_STATUS_CHANGED") {
       const p = (parsed as PlayerStatusChangedMessage).payload;
       handlers.onPlayerStatusChanged?.(p.userID, p.status, p.value);
       return;
     }
 
-    // ERROR
     if (msgType === "ERROR") {
       const p = (parsed as ErrorMessage).payload;
       handlers.onErrorMessage?.(p.message);
       return;
     }
 
-    // 将来的にサーバーが増やす未知のtype
     console.warn("[WS] unhandled message:", msgType, parsed);
   };
 
-  /**
-   * 内部用: 送信。
-   * まだ readyState が OPEN じゃない場合はキューに積む。
-   */
+  // 内部送信用。OPENでなければキューへ。
   function rawSend(message: OutgoingClientMessage): void {
     if (isOpen && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
@@ -402,52 +358,41 @@ export function connectGameSocket(
 
   /* ===== ここから外向きAPI ===== */
 
-  /** サイコロを振る要求を送る */
   function sendRollDice(): void {
-    const msg: RollDiceMessage = {
-      type: "ROLL_DICE",
-      payload: {},
-    };
+    const msg: RollDiceMessage = { type: "ROLL_DICE", payload: {} };
     rawSend(msg);
   }
 
-  /** 分岐マスでプレイヤーが進みたい先を送る */
   function sendSubmitChoice(selection: number): void {
-    const msg: SubmitChoiceMessage = {
-      type: "SUBMIT_CHOICE",
-      payload: { selection },
-    };
+    const msg: SubmitChoiceMessage = { type: "SUBMIT_CHOICE", payload: { selection } };
     rawSend(msg);
   }
 
-  /** クイズ回答（何番を選んだか）を送る */
   function sendSubmitQuiz(selection: number): void {
-    const msg: SubmitQuizMessage = {
-      type: "SUBMIT_QUIZ",
-      payload: { selection },
-    };
+    const msg: SubmitQuizMessage = { type: "SUBMIT_QUIZ", payload: { selection } };
     rawSend(msg);
   }
 
-  /** ギャンブルのベット内容を送る */
   function sendSubmitGamble(bet: number, choice: "High" | "Low"): void {
-    const msg: SubmitGambleMessage = {
-      type: "SUBMIT_GAMBLE",
-      payload: { bet, choice },
-    };
+    const msg: SubmitGambleMessage = { type: "SUBMIT_GAMBLE", payload: { bet, choice } };
     rawSend(msg);
   }
 
-  /** ソケットを閉じる */
   function close(): void {
     ws.close();
+    if (_activeSocket === connection) _activeSocket = null;
   }
 
-  return {
+  const connection: GameSocketConnection = {
     sendRollDice,
     sendSubmitChoice,
     sendSubmitQuiz,
     sendSubmitGamble,
     close,
   };
+
+  // この接続を“現役”として覚えておく
+  _activeSocket = connection;
+
+  return connection;
 }

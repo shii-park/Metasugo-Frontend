@@ -14,6 +14,7 @@ import SettingsMenu from '@/components/game/SettingMenu'
 import Tile from '@/components/game/Tile'
 
 import { colorClassOfEvent } from '@/lib/game/eventColor'
+import { useGameStore } from '@/lib/game/store'
 import { useEvents } from '@/lib/game/useEvents'
 import { connectGameSocket, GameSocketConnection } from '@/lib/game/wsClient'
 
@@ -137,6 +138,13 @@ export default function Game1() {
           | 6
 
         setLastDiceResult(v)
+      },
+
+      onQuizRequired: (tileID, quizData) => {
+        console.log('[WS] QUIZ_REQUIRED:', { tileID, quizData })
+        useGameStore.getState().setQuizReq({ tileID, quizData })
+        // ここでイベントモーダルを確実に表示させたい場合だけ（任意）
+        // setActiveEventColor(colorClassOfEvent("quiz" as EventType));
       },
 
       onPlayerMoved: (userID, newPosition) => {
