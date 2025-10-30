@@ -42,7 +42,7 @@ export default function Branch({ onClose }: BranchProps) {
 
   const [showContent, setShowContent] = useState(false)
 
-  const [finalChoice, setFinalChoice] = useState<Choice | null>(null);
+  const [, setFinalChoice] = useState<Choice | null>(null);
   const [resultMessage, setResultMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function Branch({ onClose }: BranchProps) {
               </div>
               <div className="rounded-xl border-2  bg-[#ccb173] backdrop-blur-sm shadow-lg md:p-[15%]  text-center">
                 <button
-                  type="button" 
+                  type="button"
                   className="font-bold mb-2 text-white text-2xl"
                   onClick={() => go('b')}
                   aria-label="B を選択"
