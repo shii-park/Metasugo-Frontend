@@ -9,7 +9,7 @@ import SettingsMenu from '@/components/game/SettingMenu'
 import Tile from '@/components/game/Tile'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { colorClassOfEvent } from '../../../lib/game/eventColor'
 import { useEvents } from '../../../lib/game/useEvents'
 
@@ -41,8 +41,24 @@ const PAD_BOTTOM = 7
 export default function Game1() {
   const router = useRouter()
   const goalPushedRef = useRef(false)
+  const [token, setToken] = useState<string | undefined>(undefined)
 
-  const { byId } = useEvents('/api/game/event1')
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token")
+    if (storedToken) {
+      setToken(storedToken)
+    } else {
+      console.warn("トークンが見つかりません。ログインが必要です。")
+    }
+  }, [])
+
+  const { byId } = useEvents('http://localhost:8080/tiles', token)
+
+  useEffect(() => {
+    console.log("byId:", byId)
+    console.log("1番タイル:", byId.get(1))
+    console.log("1番タイル kind:", byId.get(1)?.kind)
+  }, [byId])
 
   const TOTAL_TILES = positions.length
   const [step, setStep] = useState(0)
@@ -77,7 +93,7 @@ export default function Game1() {
       const isGoal = pos === TOTAL_TILES
       const GOAL_EVENT_TYPE: EventType = 'branch'
       const tileEventType: EventType | undefined =
-        isGoal ? GOAL_EVENT_TYPE : byId.get(pos)?.type
+        isGoal ? GOAL_EVENT_TYPE : byId.get(pos)?.kind
 
       //  ゴールは必ず「条件分岐マス（branch）」イベントを強制発火
       //  もしAPIが欠けていても branch を出すため、色は branch から算出する
@@ -141,21 +157,21 @@ export default function Game1() {
             gridTemplateRows: '18% 20% 18% 26% 18%',
           }}
         >
-          <Tile col={5} row={5} colorClass={colorClassOfEvent(byId.get(1)?.type)} className="w-full h-full" />
-          <Tile col={3} row={5} colorClass={colorClassOfEvent(byId.get(2)?.type)} className="w-full h-full" />
-          <Tile col={1} row={5} colorClass={colorClassOfEvent(byId.get(3)?.type)} className="w-full h-full" />
+          <Tile col={5} row={5} colorClass={colorClassOfEvent(byId.get(1)?.kind)} className="w-full h-full" />
+          <Tile col={3} row={5} colorClass={colorClassOfEvent(byId.get(2)?.kind)} className="w-full h-full" />
+          <Tile col={1} row={5} colorClass={colorClassOfEvent(byId.get(3)?.kind)} className="w-full h-full" />
 
-          <Tile col={1} row={3} colorClass={colorClassOfEvent(byId.get(4)?.type)} className="w-full h-full" />
-          <Tile col={3} row={3} colorClass={colorClassOfEvent(byId.get(5)?.type)} className="w-full h-full" />
-          <Tile col={5} row={3} colorClass={colorClassOfEvent(byId.get(6)?.type)} className="w-full h-full" />
-          <Tile col={7} row={3} colorClass={colorClassOfEvent(byId.get(7)?.type)} className="w-full h-full" />
-          <Tile col={9} row={3} colorClass={colorClassOfEvent(byId.get(8)?.type)} className="w-full h-full" />
+          <Tile col={1} row={3} colorClass={colorClassOfEvent(byId.get(4)?.kind)} className="w-full h-full" />
+          <Tile col={3} row={3} colorClass={colorClassOfEvent(byId.get(5)?.kind)} className="w-full h-full" />
+          <Tile col={5} row={3} colorClass={colorClassOfEvent(byId.get(6)?.kind)} className="w-full h-full" />
+          <Tile col={7} row={3} colorClass={colorClassOfEvent(byId.get(7)?.kind)} className="w-full h-full" />
+          <Tile col={9} row={3} colorClass={colorClassOfEvent(byId.get(8)?.kind)} className="w-full h-full" />
 
-          <Tile col={9} row={1} colorClass={colorClassOfEvent(byId.get(9)?.type)} className="w-full h-full" />
-          <Tile col={7} row={1} colorClass={colorClassOfEvent(byId.get(10)?.type)} className="w-full h-full" />
-          <Tile col={5} row={1} colorClass={colorClassOfEvent(byId.get(11)?.type)} className="w-full h-full" />
-          <Tile col={3} row={1} colorClass={colorClassOfEvent(byId.get(12)?.type)} className="w-full h-full" />
-          <Tile col={1} row={1} colorClass={colorClassOfEvent(byId.get(13)?.type)} className="w-full h-full" />
+          <Tile col={9} row={1} colorClass={colorClassOfEvent(byId.get(9)?.kind)} className="w-full h-full" />
+          <Tile col={7} row={1} colorClass={colorClassOfEvent(byId.get(10)?.kind)} className="w-full h-full" />
+          <Tile col={5} row={1} colorClass={colorClassOfEvent(byId.get(11)?.kind)} className="w-full h-full" />
+          <Tile col={3} row={1} colorClass={colorClassOfEvent(byId.get(12)?.kind)} className="w-full h-full" />
+          <Tile col={1} row={1} colorClass={colorClassOfEvent(byId.get(13)?.kind)} className="w-full h-full" />
         </div>
 
         <Player
