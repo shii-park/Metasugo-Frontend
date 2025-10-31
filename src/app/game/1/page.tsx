@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 // ★ Firebase Auth から必要な関数をインポート
 // ★ Firebase Auth からは onAuthStateChanged と User型 (別名で) のみインポート
-import { onAuthStateChanged, User as FirebaseUser, getIdToken } from 'firebase/auth' 
+import { onAuthStateChanged, User as FirebaseUser, getIdToken } from 'firebase/auth'
 // ★ firebase.ts から 'auth' インスタンスを直接インポート
 import { auth } from '@/firebase'
 
@@ -158,7 +158,7 @@ export default function Game1() {
 
       // authUserからIDトークンを取得 (非同期)
       authUser
-        getIdToken(authUser)
+      getIdToken(authUser)
         .then((token: string) => {
           // ★ 既存のハンドラ定義 (これは変更なし)
           const handlers = {
@@ -179,7 +179,7 @@ export default function Game1() {
 
             // いずれサーバー権威に戻す時はこれで確定させる。今は参考ログのみ。
             onMoneyChanged: (userID: string, newMoney: number) => {
-              if (!authUser || userID !== authUser.uid) return // ★ authUser.uid と比較
+              if (!authUser || userID !== authUser.uid) return // ★ authUser.uid と比較
               console.log('[WS] MONEY_CHANGED for me:', newMoney)
               setMoney((prev) => {
                 const delta = newMoney - prev
@@ -206,19 +206,10 @@ export default function Game1() {
             },
 
             onPlayerMoved: (userID: string, newPosition: number) => {
-              console.log('[WS] onPlayerMoved:', { userID, newPosition })
-              if (!authUser || userID !== authUser.uid) return // ★ authUser.uid と比較
-              setStep(newPosition) // フロント位置をサーバーに合わせる（将来用）
+              // フロー④: サーバーの計算結果はコンソールに表示するだけ
+              console.log('[WS] onPlayerMoved (サーバーの計算結果):', { userID, newPosition })
+              if (!authUser || userID !== authUser.uid) return
               setServerTileID(newPosition)
-              setExpectedFinalStep((prev) => {
-                if (prev !== null && prev !== newPosition) {
-                  console.warn('[WS] position mismatch!', {
-                    expectedFinalStep: prev,
-                    serverStep: newPosition,
-                  })
-                }
-                return null
-              })
             },
 
             onBranchChoiceRequired: (tileID: number, options: number[]) => {
@@ -458,7 +449,7 @@ export default function Game1() {
             row={3}
             colorClass={colorOf(6)}
             className="w-full h-full"
-            // style={{ gridColumn: 5 }} // grid-col-5
+          // style={{ gridColumn: 5 }} // grid-col-5
           />
           <Tile
             col={7}
