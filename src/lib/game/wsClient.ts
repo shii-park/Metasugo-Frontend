@@ -3,11 +3,9 @@
 /**
  * WebSocketクライアント (フロント側)
  *
- * - NEXT_PUBLIC_WS_URL でサーバー (例: ws://localhost:8080/ws)
- * - ★ 認証トークンあり版 ★
- *
- * 送受信するメッセージは、仕様書のJSONフォーマットに合わせて型定義している。
- * any / unknown は使わない。ハンドラは全部オプショナルなので必要なものだけ渡せばOK。
+ * - NEXT_PUBLIC_WS_URL でサーバー (例: ws://localhost:8080/ws/connection)
+ * - 認証は URL の ?token=... で付与
+ * - 自動再接続 / ハートビート / 送信キュー付き
  */
 
 /* ============================
@@ -28,7 +26,7 @@ export type DiceResultMessage = {
 /** PLAYER_MOVED */
 export type PlayerMovedPayload = {
   userID: string
-  newPosition: number // サーバーが正とするタイルID
+  newPosition: number
 }
 export type PlayerMovedMessage = {
   type: 'PLAYER_MOVED'
@@ -48,7 +46,7 @@ export type MoneyChangedMessage = {
 /** BRANCH_CHOICE_REQUIRED */
 export type BranchChoiceRequiredPayload = {
   tileID: number
-  options: number[] // 進める候補タイルID
+  options: number[]
 }
 export type BranchChoiceRequiredMessage = {
   type: 'BRANCH_CHOICE_REQUIRED'
@@ -73,7 +71,7 @@ export type QuizRequiredMessage = {
 /** GAMBLE_REQUIRED */
 export type GambleRequiredPayload = {
   tileID: number
-  referenceValue: number // High/Low の基準
+  referenceValue: number
 }
 export type GambleRequiredMessage = {
   type: 'GAMBLE_REQUIRED'
@@ -107,7 +105,7 @@ export type PlayerFinishedMessage = {
 /** PLAYER_STATUS_CHANGED */
 export type PlayerStatusChangedPayload = {
   userID: string
-  status: string // "isMarried" | "hasChildren" | "job" など
+  status: string
   value: boolean | string | number | null
 }
 export type PlayerStatusChangedMessage = {
@@ -134,13 +132,11 @@ export type ErrorMessage = {
   payload: ErrorPayload
 }
 
+/** 汎用 */
 export type QuizData = QuizRequiredPayload['quizData']
 export type GambleChoice = 'High' | 'Low'
 
-/**
- * サーバーから届きうる全てのメッセージ
- * (discriminated union)
- */
+/** サーバーから届きうる全てのメッセージ */
 export type ServerMessage =
   | DiceResultMessage
   | PlayerMovedMessage
@@ -152,48 +148,35 @@ export type ServerMessage =
   | PlayerFinishedMessage
   | PlayerStatusChangedMessage
   | NeighborRequiredMessage
-  | ErrorMessage;
+  | ErrorMessage
+  | { type: 'PONG' } // ハートビート応答
+  | { type: string; [k: string]: unknown } // 将来拡張用
 
 /* ============================
  * クライアント -> サーバー メッセージ型
  * ============================
  */
 
-/** ROLL_DICE */
 export type RollDiceMessage = {
   type: 'ROLL_DICE'
-  payload: Record<string, never> // 空オブジェクト
+  payload: Record<string, never>
 }
 
-/** SUBMIT_CHOICE (分岐で進路を選ぶ) */
 export type SubmitChoiceMessage = {
   type: 'SUBMIT_CHOICE'
-  payload: {
-    selection: number // 選択したタイルID
-  }
+  payload: { selection: number }
 }
 
-/** SUBMIT_QUIZ (クイズ回答を送る) */
 export type SubmitQuizMessage = {
   type: 'SUBMIT_QUIZ'
-  payload: {
-    selection: number // 選んだ選択肢 index (0-based)
-  }
+  payload: { selection: number }
 }
 
-/** SUBMIT_GAMBLE (ギャンブルの賭け内容を送る) */
 export type SubmitGambleMessage = {
   type: 'SUBMIT_GAMBLE'
-  payload: {
-    bet: number // 賭け金
-    choice: 'High' | 'Low'
-  }
+  payload: { bet: number; choice: 'High' | 'Low' }
 }
 
-/**
- * 送信側の全メッセージ Union
- * （キューに積むとき用）
- */
 export type OutgoingClientMessage =
   | RollDiceMessage
   | SubmitChoiceMessage
@@ -201,18 +184,19 @@ export type OutgoingClientMessage =
   | SubmitGambleMessage
 
 /* ============================
- * ハンドラ達（全部オプショナル）
+ * ハンドラ（全部オプショナル）
  * ============================
  */
 export type GameSocketHandlers = {
+  onOpen?: () => void
+  onClose?: (ev: CloseEvent) => void
+  onError?: (ev: Event) => void
+
   onDiceResult?: (userID: string, diceResult: number) => void
   onPlayerMoved?: (userID: string, newPosition: number) => void
   onMoneyChanged?: (userID: string, newMoney: number) => void
   onBranchChoiceRequired?: (tileID: number, options: number[]) => void
-  onQuizRequired?: (
-    tileID: number,
-    quizData: QuizRequiredPayload['quizData'],
-  ) => void
+  onQuizRequired?: (tileID: number, quizData: QuizRequiredPayload['quizData']) => void
   onGambleRequired?: (tileID: number, referenceValue: number) => void
   onGambleResult?: (
     userID: string,
@@ -225,16 +209,12 @@ export type GameSocketHandlers = {
 
   onNeighborRequired?: (tileID: number, message: string) => void;
   onPlayerFinished?: (userID: string, money: number) => void
-  onPlayerStatusChanged?: (
-    userID: string,
-    status: string,
-    value: boolean | string | number | null,
-  ) => void
+  onPlayerStatusChanged?: (userID: string, status: string, value: boolean | string | number | null) => void
   onErrorMessage?: (message: string) => void
 }
 
 /* ============================
- * 呼び出し元(コンポーネント)が使うインターフェース
+ * 呼び出し元が使うインターフェース
  * ============================
  */
 export type GameSocketConnection = {
@@ -250,10 +230,44 @@ export type GameSocketConnection = {
  * ============================
  */
 let _activeSocket: GameSocketConnection | null = null
-
-/** 現在アクティブな WebSocket コネクションを返す（未接続なら null） */
 export function getActiveSocket(): GameSocketConnection | null {
   return _activeSocket
+}
+
+/* ============================
+ * ユーティリティ
+ * ============================
+ */
+function encodeUrlWithToken(base: string, token: string): string {
+  try {
+    const u = new URL(base)
+    u.searchParams.set('token', token)
+    return u.toString()
+  } catch {
+    const sep = base.includes('?') ? '&' : '?'
+    return `${base}${sep}token=${encodeURIComponent(token)}`
+  }
+}
+
+/** payload あり/なし、snake/camel 混在に耐える取り出し */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getPayload<T extends object = any>(msg: unknown): Partial<T> {
+  if (!msg || typeof msg !== 'object') return {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const anyMsg = msg as any
+  const p = anyMsg.payload ?? anyMsg
+
+  // snake -> camel 柔軟対応
+  const out: Record<string, unknown> = {}
+  for (const k of Object.keys(p)) {
+    const v = p[k]
+    if (k.includes('_')) {
+      const camel = k.replace(/_([a-z])/g, (_m: string, s: string) => s.toUpperCase())
+      out[camel] = v
+    }
+    out[k] = v
+  }
+  return out as Partial<T>
 }
 
 /* ============================
@@ -262,211 +276,261 @@ export function getActiveSocket(): GameSocketConnection | null {
  */
 
 /**
- * WebSocket 接続 (認証トークン必須版)
- *
- * @param handlers イベントハンドラ
- * @param token Firebase Auth ID トークン (必須)
- * @returns 接続オブジェクト
+ * WebSocket 接続 (認証トークン必須)
+ * @param handlers ハンドラ群
+ * @param token Firebase IDトークン（必須）
  */
 export function connectGameSocket(
   handlers: GameSocketHandlers,
-  token: string | null, // ★ 認証トークンを引数で受け取る
+  token: string | null,
 ): GameSocketConnection {
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? ''
-
-  // ★ トークンがない場合はエラーを出し、処理を中断
+  const baseUrl = process.env.NEXT_PUBLIC_WS_URL ?? ''
+  if (!baseUrl) {
+    console.error('[WS] NEXT_PUBLIC_WS_URL が未設定です')
+    return makeDummyConnection()
+  }
   if (!token) {
     console.error('[WS] 認証トークンがありません。接続を中止します。')
-    // ダミーの接続オブジェクトを返して、後続の処理がクラッシュしないようにする
-    return {
-      sendRollDice: () => console.error('WS未接続: sendRollDice'),
-      sendSubmitChoice: () => console.error('WS未接続: sendSubmitChoice'),
-      sendSubmitQuiz: () => console.error('WS未接続: sendSubmitQuiz'),
-      sendSubmitGamble: () => console.error('WS未接続: sendSubmitGamble'),
-      close: () => {},
-    }
+    return makeDummyConnection()
   }
 
-  // ★ URLにトークンを付与 (Goのミドルウェアが 'token' クエリを想定している場合)
-  const urlWithToken = `${wsUrl}?token=${token}`
+  const url = encodeUrlWithToken(baseUrl, token)
 
-  console.log(`[WS] 接続試行: ${wsUrl}?token=...`) // (セキュリティのためトークン本体はログに出さない)
-  const ws = new WebSocket(urlWithToken) // ★ 修正後のURLで接続
-
+  let ws: WebSocket | null = null
   let isOpen = false
+  let manualClosed = false
 
-  // 接続完了前に送ろうとしたメッセージを貯めておく
-  const messageQueue: OutgoingClientMessage[] = []
+  // 送信キュー（OPEN まで貯める）
+  const queue: OutgoingClientMessage[] = []
 
-  ws.onopen = () => {
-    console.log('[WS] connected')
-    isOpen = true
+  // 自動再接続（指数バックオフ）
+  let retry = 0
+  const MIN_MS = 500
+  const MAX_MS = 10_000
 
-    // 溜まってたメッセージを送信
-    for (const m of messageQueue) {
-      ws.send(JSON.stringify(m))
+  // ハートビート
+  let pingTimer: ReturnType<typeof setInterval> | null = null
+  const PING_INTERVAL = 25_000
+  const startPing = () => {
+    stopPing()
+    pingTimer = setInterval(() => {
+      try {
+        ws?.send(JSON.stringify({ type: 'PING', payload: {} }))
+      } catch { /* noop */ }
+    }, PING_INTERVAL)
+  }
+  const stopPing = () => {
+    if (pingTimer) {
+      clearInterval(pingTimer)
+      pingTimer = null
     }
-    messageQueue.length = 0
   }
 
-  ws.onerror = (event: Event) => {
-    console.error('[WS] error', event)
-  }
+  const open = () => {
+    // 接続
+    console.log('[WS] 接続試行: ', `${baseUrl}?token=...`)
+    ws = new WebSocket(url)
 
-  ws.onclose = () => {
-    console.warn('[WS] closed')
-    isOpen = false
-  }
-
-  ws.onmessage = (event: MessageEvent<string>) => {
-    // JSON parse
-    let parsed: ServerMessage
-    try {
-      parsed = JSON.parse(event.data) as ServerMessage
-    } catch {
-      console.error('[WS] invalid JSON:', event.data)
-      return
+    ws.onopen = () => {
+      isOpen = true
+      retry = 0
+      handlers.onOpen?.()
+      startPing()
+      // 溜まっていたメッセージを送信
+      for (const m of queue.splice(0)) {
+        ws?.send(JSON.stringify(m))
+      }
     }
 
-    const msgType: string = parsed.type
+    ws.onerror = (ev: Event) => {
+      handlers.onError?.(ev)
+    }
 
-    // ★ 注意: サーバーが snake_case で送ってくる場合、ここでマッピングが必要
-    // もしDICE_RESULTがsnake_case (user_id, dice_result) の場合:
-    if (msgType === 'DICE_RESULT') {
+    ws.onclose = (ev: CloseEvent) => {
+      isOpen = false
+      stopPing()
+      handlers.onClose?.(ev)
+
+      // 手動 close 以外は自動再接続
+      if (!manualClosed) {
+        retry += 1
+        const wait = Math.min(MAX_MS, MIN_MS * Math.pow(2, retry)) + Math.floor(Math.random() * 300)
+        setTimeout(() => {
+          if (!manualClosed) open()
+        }, wait)
+      }
+    }
+
+    ws.onmessage = (ev: MessageEvent<string>) => {
+      let parsed: ServerMessage
+      try {
+        parsed = JSON.parse(ev.data) as ServerMessage
+      } catch {
+        console.error('[WS] invalid JSON:', ev.data)
+        return
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const p = (parsed as any).payload // anyで受け取る
-      // snake_case/camelCase 両対応 (サーバーの実装に合わせて調整)
-      const userID = p.userID ?? p.user_id
-      const diceResult = p.diceResult ?? p.dice_result
-      handlers.onDiceResult?.(userID, diceResult)
-      return
-    }
+      const type = (parsed as any)?.type as string
+      if (!type) return
 
-    if (msgType === 'PLAYER_MOVED') {
-      const p = (parsed as PlayerMovedMessage).payload
-      handlers.onPlayerMoved?.(p.userID, p.newPosition)
-      return
-    }
+      switch (type) {
+        case 'PONG':
+          // ハートビート応答
+          return
 
-    if (msgType === 'MONEY_CHANGED') {
-      const p = (parsed as MoneyChangedMessage).payload
-      handlers.onMoneyChanged?.(p.userID, p.newMoney)
-      return
-    }
+        case 'DICE_RESULT': {
+          const p = getPayload<DiceResultPayload>(parsed)
+          if (p.userID != null && p.diceResult != null) {
+            handlers.onDiceResult?.(String(p.userID), Number(p.diceResult))
+          }
+          return
+        }
 
-    if (msgType === 'BRANCH_CHOICE_REQUIRED') {
-      const p = (parsed as BranchChoiceRequiredMessage).payload
-      handlers.onBranchChoiceRequired?.(p.tileID, p.options)
-      return
-    }
+        case 'PLAYER_MOVED': {
+          const p = getPayload<PlayerMovedPayload>(parsed)
+          if (p.userID != null && p.newPosition != null) {
+            handlers.onPlayerMoved?.(String(p.userID), Number(p.newPosition))
+          }
+          return
+        }
 
-    if (msgType === 'QUIZ_REQUIRED') {
-      const p = (parsed as QuizRequiredMessage).payload
-      handlers.onQuizRequired?.(p.tileID, p.quizData)
-      return
-    }
+        case 'MONEY_CHANGED': {
+          const p = getPayload<MoneyChangedPayload>(parsed)
+          if (p.userID != null && p.newMoney != null) {
+            handlers.onMoneyChanged?.(String(p.userID), Number(p.newMoney))
+          }
+          return
+        }
 
-    if (msgType === 'GAMBLE_REQUIRED') {
-      const p = (parsed as GambleRequiredMessage).payload
-      handlers.onGambleRequired?.(p.tileID, p.referenceValue)
-      return
-    }
+        case 'BRANCH_CHOICE_REQUIRED': {
+          const p = getPayload<BranchChoiceRequiredPayload>(parsed)
+          if (p.tileID != null && Array.isArray(p.options)) {
+            handlers.onBranchChoiceRequired?.(Number(p.tileID), p.options.map(Number))
+          }
+          return
+        }
 
-    if (msgType === 'GAMBLE_RESULT') {
-      const p = (parsed as GambleResultMessage).payload
-      handlers.onGambleResult?.(
-        p.userID,
-        p.diceResult,
-        p.choice,
-        p.won,
-        p.amount,
-        p.newMoney,
-      )
-      return
-    }
+        case 'QUIZ_REQUIRED': {
+          const p = getPayload<QuizRequiredPayload>(parsed)
+          if (p.tileID != null && p.quizData) {
+            handlers.onQuizRequired?.(Number(p.tileID), p.quizData)
+          }
+          return
+        }
 
-    if (msgType === 'PLAYER_FINISHED') {
-      const p = (parsed as PlayerFinishedMessage).payload
-      handlers.onPlayerFinished?.(p.userID, p.money)
-      return
-    }
+        case 'GAMBLE_REQUIRED': {
+          const p = getPayload<GambleRequiredPayload>(parsed)
+          if (p.tileID != null && p.referenceValue != null) {
+            handlers.onGambleRequired?.(Number(p.tileID), Number(p.referenceValue))
+          }
+          return
+        }
 
-    if (msgType === 'PLAYER_STATUS_CHANGED') {
-      const p = (parsed as PlayerStatusChangedMessage).payload
-      handlers.onPlayerStatusChanged?.(p.userID, p.status, p.value)
-      return
-    }
+        case 'GAMBLE_RESULT': {
+          const p = getPayload<GambleResultPayload>(parsed)
+          if (p.userID != null && p.diceResult != null && p.choice && p.won != null && p.amount != null && p.newMoney != null) {
+            handlers.onGambleResult?.(
+              String(p.userID),
+              Number(p.diceResult),
+              p.choice as 'High' | 'Low',
+              Boolean(p.won),
+              Number(p.amount),
+              Number(p.newMoney),
+            )
+          }
+          return
+        }
+    
+        if (msgType === "ERROR") {
+          const p = (parsed as ErrorMessage).payload;
+          handlers.onErrorMessage?.(p.message);
+          return;
+        }
 
-    if (msgType === "NEIGHBOR_REQUIRED") {
-      const p = (parsed as NeighborRequiredMessage).payload;
-      handlers.onNeighborRequired?.(p.tileID, p.message);
-      return;
-    }
+        if (msgType === "NEIGHBOR_REQUIRED") {
+          const p = (parsed as NeighborRequiredMessage).payload;
+          handlers.onNeighborRequired?.(p.tileID, p.message);
+          return;
+        }
+        case 'PLAYER_FINISHED': {
+          const p = getPayload<PlayerFinishedPayload>(parsed)
+          if (p.userID != null && p.money != null) {
+            handlers.onPlayerFinished?.(String(p.userID), Number(p.money))
+          }
+          return
+        }
 
-    if (msgType === "ERROR") {
-      const p = (parsed as ErrorMessage).payload;
-      handlers.onErrorMessage?.(p.message);
-      return;
-    }
+        case 'PLAYER_STATUS_CHANGED': {
+          const p = getPayload<PlayerStatusChangedPayload>(parsed)
+          if (p.userID != null && p.status != null) {
+            handlers.onPlayerStatusChanged?.(String(p.userID), String(p.status), p.value ?? null)
+          }
+          return
+        }
 
-    console.warn('[WS] unhandled message:', msgType, parsed)
+        case 'ERROR': {
+          const p = getPayload<ErrorPayload>(parsed)
+          if (p.message) handlers.onErrorMessage?.(String(p.message))
+          return
+        }
+
+        default:
+          // 未知メッセージは無視（必要ならログ）
+          // console.debug('[WS] unknown message:', parsed)
+          return
+      }
+    }
   }
 
-  // 内部送信用。OPENでなければキューへ。
-  function rawSend(message: OutgoingClientMessage): void {
-    if (isOpen && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(message))
-      return
+  // 初回接続
+  open()
+
+  // 送信（OPENでなければキューへ）
+  const rawSend = (msg: OutgoingClientMessage) => {
+    if (isOpen && ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(msg))
+    } else {
+      queue.push(msg)
     }
-    messageQueue.push(message)
-  }
-
-  /* ===== ここから外向きAPI ===== */
-
-  function sendRollDice(): void {
-    const msg: RollDiceMessage = { type: 'ROLL_DICE', payload: {} }
-    rawSend(msg)
-  }
-
-  function sendSubmitChoice(selection: number): void {
-    const msg: SubmitChoiceMessage = {
-      type: 'SUBMIT_CHOICE',
-      payload: { selection },
-    }
-    rawSend(msg)
-  }
-
-  function sendSubmitQuiz(selection: number): void {
-    const msg: SubmitQuizMessage = {
-      type: 'SUBMIT_QUIZ',
-      payload: { selection },
-    }
-    rawSend(msg)
-  }
-
-  function sendSubmitGamble(bet: number, choice: 'High' | 'Low'): void {
-    const msg: SubmitGambleMessage = {
-      type: 'SUBMIT_GAMBLE',
-      payload: { bet, choice },
-    }
-    rawSend(msg)
-  }
-
-  function close(): void {
-    ws.close()
-    if (_activeSocket === connection) _activeSocket = null
   }
 
   const connection: GameSocketConnection = {
-    sendRollDice,
-    sendSubmitChoice,
-    sendSubmitQuiz,
-    sendSubmitGamble,
-    close,
+    sendRollDice() {
+      rawSend({ type: 'ROLL_DICE', payload: {} })
+    },
+    sendSubmitChoice(selection: number) {
+      rawSend({ type: 'SUBMIT_CHOICE', payload: { selection } })
+    },
+    sendSubmitQuiz(selection: number) {
+      rawSend({ type: 'SUBMIT_QUIZ', payload: { selection } })
+    },
+    sendSubmitGamble(bet: number, choice: 'High' | 'Low') {
+      rawSend({ type: 'SUBMIT_GAMBLE', payload: { bet, choice } })
+    },
+    close() {
+      manualClosed = true
+      stopPing()
+      try {
+        ws?.close()
+      } catch { /* noop */ }
+      ws = null
+      if (_activeSocket === connection) _activeSocket = null
+    },
   }
 
-  // この接続を“現役”として覚えておく
   _activeSocket = connection
-
   return connection
+}
+
+/* =========== ダミー =========== */
+function makeDummyConnection(): GameSocketConnection {
+  const warn = (m: string) => () => console.error(`WS未接続: ${m}`)
+  return {
+    sendRollDice: warn('sendRollDice'),
+    sendSubmitChoice: warn('sendSubmitChoice'),
+    sendSubmitQuiz: warn('sendSubmitQuiz'),
+    sendSubmitGamble: warn('sendSubmitGamble'),
+    close: () => {},
+  }
 }
