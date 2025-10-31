@@ -13,7 +13,7 @@ export const EVENT_BY_COLOR: Record<string, ComponentType<{ onClose: () => void 
   'bg-red-default':     MoneyMinus,  // money_minus
   'bg-yellow-default':  Quiz,        // quiz
   'bg-gray-light':      Branch,      // branch
-  'bg-purple-default':  Global,      // global
+  'bg-pink-default':  Global,      // global
   'bg-green-default':   Neighbor,    // neighbor
-  'bg-pink-default':    Gamble,      // gamble
+  'bg-purple-default':    Gamble,      // gamble
 }

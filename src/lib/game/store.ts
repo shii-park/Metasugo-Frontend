@@ -1,5 +1,5 @@
 // src/lib/game/store.ts
-import type { QuizData, NeighborRequiredPayload, BranchChoiceRequiredPayload } from '@/lib/game/wsClient';
+import type { NeighborRequiredPayload, QuizData } from '@/lib/game/wsClient';
 import { create } from 'zustand';
 
 type QuizReq = { tileID: number; quizData: QuizData } | null
