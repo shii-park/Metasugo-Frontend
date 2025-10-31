@@ -66,7 +66,7 @@ export default function Home() {
               >
                 ログアウト
               </button>
-              <div className='text-[#5B7BA6] text-xs'>{user.email}</div>
+              <div className='text-[#5B7BA6] text-xs font-bold justify-end'>{user.displayName}</div>
             </div>
           </div>
 

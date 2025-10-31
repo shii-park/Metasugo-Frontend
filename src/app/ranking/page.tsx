@@ -7,6 +7,7 @@ import { useAuth } from './../../context/AuthContext'
 
 interface Player {
   playerID: string
+  displayName: string
   money: number
   finishedAt: string
 }
@@ -19,42 +20,42 @@ export default function Ranking() {
 
   // --- ログインチェック ---
   useEffect(() => {
-    console.log('useEffect: user/loading changed', { user, loading })
+    console.log('🌀 useEffect: user/loading changed', { user, loading })
     if (!loading && !user) {
-      console.log('未ログインのため /signin にリダイレクト')
+      console.log('🚪 未ログインのため /signin にリダイレクト')
       router.push('/signin')
     }
-  }, [user?.uid, loading, router]) // ← user オブジェクトではなく uid に依存
+  }, [user?.uid, loading, router])
 
-  // --- バックエンドからランキング取得 ---
+  // --- ランキング取得 ---
   useEffect(() => {
     if (!user) {
-      console.log('user がまだ存在しません。fetch 中止')
+      console.log('⏸️ user がまだ存在しません。fetch 中止')
       return
     }
 
     const fetchRanking = async () => {
       try {
         const token = await user.getIdToken()
-        console.log('取得した ID トークン:', token)
+        console.log('✅ 取得した ID トークン:', token)
 
         const res = await fetch('http://localhost:8080/ranking', {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         })
 
-        console.log('fetch /ranking 結果', { ok: res.ok, status: res.status })
+        console.log('📡 fetch /ranking 結果', { ok: res.ok, status: res.status })
 
         if (!res.ok) throw new Error(`ランキングの取得に失敗しました (status: ${res.status})`)
 
         const data: Player[] = await res.json()
-        console.log('取得したランキングデータ:', data)
+        console.log('📦 取得したランキングデータ:', data)
 
         // 所持金順に降順ソート
         data.sort((a, b) => b.money - a.money)
         setPlayers(data)
-        console.log('ソート後のランキングデータ:', data)
+        console.log('🔽 ソート後のランキングデータ:', data)
       } catch (error: any) {
         console.error('❌ ランキング取得エラー:', error)
         setFetchError(error.message)
@@ -62,7 +63,7 @@ export default function Ranking() {
     }
 
     fetchRanking()
-  }, [user?.uid]) // ← uid のみ依存にすることで警告を回避
+  }, [user?.uid])
 
   if (loading) {
     return (
@@ -80,20 +81,26 @@ export default function Ranking() {
     )
   }
 
-  // 自分の順位
-  const myRank = players.findIndex((p) => p.playerID === user.displayName) + 1
-  const myMoney = players.find((p) => p.playerID === user.displayName)?.money ?? 0
-  console.log('自分の順位と所持金', { myRank, myMoney })
+  // 自分の順位を displayName で検索
+  const myRank = players.findIndex((p) => p.displayName === user.displayName) + 1
+  const myMoney = players.find((p) => p.displayName === user.displayName)?.money ?? 0
+
+  console.log('👤 自分の順位と所持金', {
+    displayName: user.displayName,
+    myRank,
+    myMoney,
+  })
 
   return (
     <div>
-      {/* 横向き注意 */}
+      {/* 縦向き警告 */}
       <div className='portrait:fixed portrait:inset-0 portrait:bg-[#5B7BA6] portrait:text-white portrait:text-2xl portrait:flex portrait:items-center portrait:justify-center portrait:z-50 portrait:overflow-hidden portrait:touch-none'>
         画面を横向きにしてください
       </div>
 
       <div className='fixed inset-0 flex h-[100dvh] items-center justify-center bg-black overflow-hidden'>
         <div className='relative w-full h-full max-w-[177.78vh] max-h-[56.25vw] aspect-video bg-[#E3DECF] py-2 px-4'>
+          {/* ヘッダー */}
           <div className='flex'>
             <img src='/logo.svg' alt='ロゴ' className='absolute top-3 left-10' />
             <div className='flex flex-col absolute top-8 right-10'>
@@ -103,6 +110,7 @@ export default function Ranking() {
             </div>
           </div>
 
+          {/* ランキング本体 */}
           <div className='flex flex-col justify-center items-center border-2 border-white w-full h-full'>
             <div className='md:text-4xl text-xl font-bold text-blue-default mb-4'>
               ランキング
@@ -124,7 +132,7 @@ export default function Ranking() {
                         {idx + 1}位
                       </p>
                       <p className='px-4 md:text-xl text-md w-full font-bold text-blue-default'>
-                        {p.playerID}
+                        {p.displayName}
                       </p>
                     </div>
                     <p className='whitespace-nowrap flex justify-end px-4 md:text-2xl text-md font-bold text-blue-default'>
@@ -135,6 +143,7 @@ export default function Ranking() {
               </div>
             )}
 
+            {/* 自分の順位欄 */}
             <div className='w-4/5 flex flex-row px-8 py-4 justify-around mt-4'>
               <div className='w-full flex flex-row'>
                 <p className='whitespace-nowrap px-4 md:text-2xl text-xl font-bold text-blue-default'>

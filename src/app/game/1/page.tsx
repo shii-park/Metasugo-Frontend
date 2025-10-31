@@ -60,7 +60,7 @@ export default function Game1() {
 
   const [step, setStep] = useState(0)
 
-  // サーバーが公式に教えてくれた "お前はタイルID X にいるよ" を覚える場所
+  // サーバーが公式に教えてくれた "お前はタイルID X にいるよ" を覚える場所（将来用）
   const [serverTileID, setServerTileID] = useState<number | null>(null)
 
   const [isDiceOpen, setIsDiceOpen] = useState(false)
@@ -73,8 +73,10 @@ export default function Game1() {
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
-  // 「このターンの最終着地はここになるはず」とフロントが思ってる場所
+  // 「このターンの最終着地はここになるはず」とフロントが思ってる場所（WS検証用）
   const [, setExpectedFinalStep] = useState<number | null>(null)
+
+  // 所持金（フロント権威モード）
   const [money, setMoney] = useState<number>(10000)
 
   // (分岐マス用UI)
@@ -83,7 +85,7 @@ export default function Game1() {
     options: number[]
   } | null>(null)
 
-  // WebSocketコネクション保持
+  // WebSocketコネクション保持（今はフロント管理だが接続は残す）
   const wsRef = useRef<GameSocketConnection | null>(null)
 
   // 現在の駒の描画用座標
@@ -138,10 +140,10 @@ export default function Game1() {
         // 必要なら: setActiveEventColor(colorClassOfEvent('quiz' as EventType))
       },
 
+      // いずれサーバー権威に戻す時はこれで確定させる。今は参考ログのみ。
       onMoneyChanged: (userID, newMoney) => {
         if (userID !== SELF_USER_ID) return
         console.log('[WS] MONEY_CHANGED for me:', newMoney)
-
         setMoney((prev) => {
           const delta = newMoney - prev
           if (delta !== 0) {
@@ -156,15 +158,14 @@ export default function Game1() {
         if (amount !== 0) {
           useGameStore.getState().setMoneyChange({ delta: amount })
         }
-
         setMoney(newMoney)
       },
 
       onPlayerMoved: (userID, newPosition) => {
         console.log('[WS] onPlayerMoved:', { userID, newPosition })
         if (userID !== SELF_USER_ID) return
-        setStep(newPosition) // フロント位置をサーバーに合わせる
-        setServerTileID(newPosition) // 現在地タイルIDを保持
+        setStep(newPosition) // フロント位置をサーバーに合わせる（将来用）
+        setServerTileID(newPosition)
         setExpectedFinalStep((prev) => {
           if (prev !== null && prev !== newPosition) {
             console.warn('[WS] position mismatch!', {
@@ -188,6 +189,32 @@ export default function Game1() {
       wsRef.current = null
     }
   }, [])
+
+  // ===== タイル効果の適用（フロント権威：踏破時に即お金を更新） =====
+  function runTileEffect(tileId: number) {
+    const tile = tileById.get(tileId)
+    if (!tile) return
+    // effect は useTiles 側で { type: '...' , amount? } 形を想定
+    const ef = tile.effect as { type?: string; amount?: number } | undefined
+    if (!ef || !ef.type) return
+
+    if (ef.type === 'profit') {
+      const amt = Number(ef.amount ?? 0) || 0
+      if (amt !== 0) {
+        useGameStore.getState().setMoneyChange({ delta: amt })
+        setMoney((prev) => prev + amt)
+        console.log('[Game1] PROFIT tile:', tileId, '+', amt)
+      }
+    } else if (ef.type === 'loss') {
+      const amt = Number(ef.amount ?? 0) || 0
+      if (amt !== 0) {
+        useGameStore.getState().setMoneyChange({ delta: -amt })
+        setMoney((prev) => prev - amt)
+        console.log('[Game1] LOSS tile:', tileId, '-', amt)
+      }
+    }
+    // 他の effect (quiz/branch/gamble etc.) は既存フローでハンドリング
+  }
 
   // ===== コマを進める（フロント側のアニメーション） =====
   async function moveBy(stepsToMove: number) {
@@ -221,10 +248,15 @@ export default function Game1() {
 
     setExpectedFinalStep(pos) // サーバー想定とのズレ検証用
 
+    // ★★★ 踏破したマスの「お金増減イベント」を即時適用（フロント管理） ★★★
+    if (pos > 0 && pos <= TOTAL_TILES) {
+      runTileEffect(pos)
+    }
+
     // タイルイベント（色のやつなど）
     if (pos > 0 && pos <= TOTAL_TILES) {
       const isGoal = pos === TOTAL_TILES
-      const GOAL_EVENT_TYPE: EventType = 'branch'
+      const GOAL_EVENT_TYPE: EventType = 'branch' // 仮のイベント色
       const tileEventType: EventType | undefined = isGoal
         ? GOAL_EVENT_TYPE
         : kindToEventType(tileById.get(pos)?.kind)
@@ -276,36 +308,36 @@ export default function Game1() {
     colorClassOfEvent(kindToEventType(tileById.get(id)?.kind))
 
   return (
-    <div className='relative w-full h-[100dvh] bg-brown-light grid place-items-center'>
-      <div className='relative aspect-[16/9] w-[min(100vw,calc(100dvh*16/9))] overflow-hidden'>
+    <div className="relative w-full h-[100dvh] bg-brown-light grid place-items-center">
+      <div className="relative aspect-[16/9] w-[min(100vw,calc(100dvh*16/9))] overflow-hidden">
         <Image
-          src='/back1.png'
-          alt=''
+          src="/back1.png"
+          alt=""
           fill
-          className='object-cover z-0 pointer-events-none opacity-70'
+          className="object-cover z-0 pointer-events-none opacity-70"
           aria-hidden
           priority
-          sizes='100vw'
+          sizes="100vw"
         />
 
         <GameHUD
           money={money}
           remaining={TOTAL_TILES - step}
-          className='w-full absolute top-[3%] left-[3%]'
+          className="w-full absolute top-[3%] left-[3%]"
         />
 
-        <div className='absolute top-[3%] right-[6%]'>
-          <SettingsMenu sizePct={8} className='w-1/5 z-10' />
+        <div className="absolute top-[3%] right-[6%]">
+          <SettingsMenu sizePct={8} className="w-1/5 z-10" />
         </div>
 
-        <div className='absolute bottom-[10%] sm:bottom-[12%] right-[18%] rounded-md bg-brown-default/90 text-white border-2 border-white px-4 py-2 md:py-8 md:px-12 font-bold text-xl md:text-3xl'>
+        <div className="absolute bottom-[10%] sm:bottom-[12%] right-[18%] rounded-md bg-brown-default/90 text-white border-2 border-white px-4 py-2 md:py-8 md:px-12 font-bold text-xl md:text-3xl">
           スタート
         </div>
 
         <DiceButton
           onClick={handleRollClick}
           disabled={isMoving || !!activeEventColor}
-          className='absolute right-[3%] bottom-[3%] z-10'
+          className="absolute right-[3%] bottom-[3%] z-10"
         />
 
         <DiceOverlay
@@ -320,93 +352,28 @@ export default function Game1() {
 
         {/* マップタイル配置 */}
         <div
-          className='absolute inset-0 grid grid-cols-9 grid-rows-5 px-[10%] pt-[9.5%] pb-[7%]'
+          className="absolute inset-0 grid grid-cols-9 grid-rows-5 px-[10%] pt-[9.5%] pb-[7%]"
           style={{
             gridTemplateColumns:
               '9.5% 13.125% 9.5% 13.125% 9.5% 13.125% 9.5% 13.125% 9.5%',
             gridTemplateRows: '18% 20% 18% 26% 18%',
           }}
         >
-          <Tile
-            col={5}
-            row={5}
-            colorClass={colorOf(1)}
-            className='w-full h-full'
-          />
-          <Tile
-            col={3}
-            row={5}
-            colorClass={colorOf(2)}
-            className='w-full h-full'
-          />
-          <Tile
-            col={1}
-            row={5}
-            colorClass={colorOf(3)}
-            className='w-full h-full'
-          />
+          <Tile col={5} row={5} colorClass={colorOf(1)} className="w-full h-full" />
+          <Tile col={3} row={5} colorClass={colorOf(2)} className="w-full h-full" />
+          <Tile col={1} row={5} colorClass={colorOf(3)} className="w-full h-full" />
 
-          <Tile
-            col={1}
-            row={3}
-            colorClass={colorOf(4)}
-            className='w-full h-full'
-          />
-          <Tile
-            col={3}
-            row={3}
-            colorClass={colorOf(5)}
-            className='w-full h-full'
-          />
-          <Tile
-            col={5}
-            row={3}
-            colorClass={colorOf(6)}
-            className='w-full h-full'
-          />
-          <Tile
-            col={7}
-            row={3}
-            colorClass={colorOf(7)}
-            className='w-full h-full'
-          />
-          <Tile
-            col={9}
-            row={3}
-            colorClass={colorOf(8)}
-            className='w-full h-full'
-          />
+          <Tile col={1} row={3} colorClass={colorOf(4)} className="w-full h-full" />
+          <Tile col={3} row={3} colorClass={colorOf(5)} className="w-full h-full" />
+          <Tile col={5} row={3} colorClass={colorOf(6)} className="w-full h-full" />
+          <Tile col={7} row={3} colorClass={colorOf(7)} className="w-full h-full" />
+          <Tile col={9} row={3} colorClass={colorOf(8)} className="w-full h-full" />
 
-          <Tile
-            col={9}
-            row={1}
-            colorClass={colorOf(9)}
-            className='w-full h-full'
-          />
-          <Tile
-            col={7}
-            row={1}
-            colorClass={colorOf(10)}
-            className='w-full h-full'
-          />
-          <Tile
-            col={5}
-            row={1}
-            colorClass={colorOf(11)}
-            className='w-full h-full'
-          />
-          <Tile
-            col={3}
-            row={1}
-            colorClass={colorOf(12)}
-            className='w-full h-full'
-          />
-          <Tile
-            col={1}
-            row={1}
-            colorClass={colorOf(13)}
-            className='w-full h-full'
-          />
+          <Tile col={9} row={1} colorClass={colorOf(9)} className="w-full h-full" />
+          <Tile col={7} row={1} colorClass={colorOf(10)} className="w-full h-full" />
+          <Tile col={5} row={1} colorClass={colorOf(11)} className="w-full h-full" />
+          <Tile col={3} row={1} colorClass={colorOf(12)} className="w-full h-full" />
+          <Tile col={1} row={1} colorClass={colorOf(13)} className="w-full h-full" />
         </div>
 
         {/* プレイヤー駒 */}
@@ -418,8 +385,8 @@ export default function Game1() {
           padXPct={PAD_X}
           padTopPct={PAD_TOP}
           padBottomPct={PAD_BOTTOM}
-          label='あなた'
-          imgSrc='/player1.png'
+          label="あなた"
+          imgSrc="/player1.png"
         />
 
         {/* ゴール等のイベントモーダル */}
@@ -443,17 +410,17 @@ export default function Game1() {
 
         {/* 分岐マスの仮UI */}
         {branchChoice && (
-          <div className='absolute inset-0 z-[200] flex items-center justify-center bg-black/40 text-white'>
-            <div className='bg-brown-default border-2 border-white p-4 rounded-md text-center'>
-              <div className='font-bold mb-2'>
+          <div className="absolute inset-0 z-[200] flex items-center justify-center bg-black/40 text-white">
+            <div className="bg-brown-default border-2 border-white p-4 rounded-md text-center">
+              <div className="font-bold mb-2">
                 分岐マス {branchChoice.tileID}！どっちに進む？
               </div>
-              <div className='flex flex-col gap-2'>
+              <div className="flex flex-col gap-2">
                 {branchChoice.options.map((opt) => (
                   <button
                     key={opt}
                     onClick={() => handleChooseBranch(opt)}
-                    className='px-4 py-2 rounded bg-blue-default text-white font-bold'
+                    className="px-4 py-2 rounded bg-blue-default text-white font-bold"
                   >
                     タイル {opt} に進む
                   </button>
