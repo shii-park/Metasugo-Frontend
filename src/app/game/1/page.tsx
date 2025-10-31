@@ -356,8 +356,9 @@ export default function Game1() {
       if (color && EVENT_BY_COLOR[color]) {
         setActiveEventColor(color)
 
-        if (tileEventType === 'overall' || tileEventType === 'neighbor')
+        if (tileEventType === 'overall' || tileEventType === 'neighbor'){
           setCurrentEventDetail(tileDetail);
+        }
         if (isGoal) setGoalAwaitingEventClose(true)
       }
     }
