@@ -233,13 +233,6 @@ export default function Game1() {
                 money,
               )
 
-              try {
-                // 心拍タイマー等は wsClient 側の close() が止める
-                wsRef.current?.close()
-              } finally {
-                wsRef.current = null
-              }
-
               // ここで UI 遷移やストア反映をしたい場合は任意で:
               // useGameStore.getState().setFinalMoney?.(money)
               // router.push('/result') など

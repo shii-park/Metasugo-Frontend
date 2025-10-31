@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import Image from 'next/image'
@@ -64,7 +63,7 @@ export default function Game2a() {
   const TOTAL_TILES = Math.min(positions.length, tiles?.length ?? positions.length)
 
   const [step, setStep] = useState(0)
-  const [serverTileID, setServerTileID] = useState<number | null>(null)
+  const [, setServerTileID] = useState<number | null>(null)
   const [isDiceOpen, setIsDiceOpen] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
   const [lastDiceResult, setLastDiceResult] = useState<1 | 2 | 3 | 4 | 5 | 6 | null>(null)
@@ -78,7 +77,7 @@ export default function Game2a() {
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
   const [, setExpectedFinalStep] = useState<number | null>(null)
-  const [branchChoice, setBranchChoice] = useState<{ tileID: number; options: number[] } | null>(null)
+  const [, setBranchChoice] = useState<{ tileID: number; options: number[] } | null>(null)
   const wsRef = useRef<GameSocketConnection | null>(null)
 
   const cur = useMemo(() => (step === 0 ? START_POS : positions[step - 1]), [step])
@@ -130,6 +129,7 @@ export default function Game2a() {
             onBranchChoiceRequired: (tileID: number, options: number[]) => {
               setBranchChoice({ tileID, options })
             },
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             onPlayerFinished: (userID: string, _money: number) => {
               if (!authUser || userID !== authUser.uid) return
               try { wsRef.current?.close() } finally { wsRef.current = null }
