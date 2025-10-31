@@ -441,18 +441,7 @@ export function connectGameSocket(
           }
           return
         }
-    
-        if (msgType === "ERROR") {
-          const p = (parsed as ErrorMessage).payload;
-          handlers.onErrorMessage?.(p.message);
-          return;
-        }
 
-        if (msgType === "NEIGHBOR_REQUIRED") {
-          const p = (parsed as NeighborRequiredMessage).payload;
-          handlers.onNeighborRequired?.(p.tileID, p.message);
-          return;
-        }
         case 'PLAYER_FINISHED': {
           const p = getPayload<PlayerFinishedPayload>(parsed)
           if (p.userID != null && p.money != null) {
