@@ -1,8 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
+
+// ★ Firebase Auth から必要な関数をインポート
+// ★ Firebase Auth からは onAuthStateChanged と User型 (別名で) のみインポート
+import { User as FirebaseUser, getIdToken, onAuthStateChanged } from 'firebase/auth'
+// ★ firebase.ts から 'auth' インスタンスを直接インポート
+import { auth } from '@/firebase'
 
 import { EventType } from '@/app/api/game/type'
 import { EVENT_BY_COLOR } from '@/components/events'
@@ -17,7 +24,11 @@ import { colorClassOfEvent } from '@/lib/game/eventColor'
 import { kindToEventType } from '@/lib/game/kindMap'
 import { useGameStore } from '@/lib/game/store'
 import { useTiles } from '@/lib/game/useTiles'
-import { connectGameSocket, GameSocketConnection } from '@/lib/game/wsClient'
+import {
+  connectGameSocket,
+  GameSocketConnection,
+  QuizData, // ★ 型をインポート
+} from '@/lib/game/wsClient'
 
 const START_POS = { col: 7, row: 5 }
 
@@ -47,7 +58,9 @@ const PAD_BOTTOM = 7
 export default function Game1() {
   const router = useRouter()
   const goalPushedRef = useRef(false)
-  const [token, setToken] = useState<string | undefined>(undefined)
+  // const [token, setToken] = useState<string | undefined>(undefined) // ◀ 削除
+  // ★ Firebase User オブジェクトを管理する state を追加
+  const [authUser, setAuthUser] = useState<FirebaseUser | null>(null)
 
   const { byId: tileById, tiles } = useTiles()
   // 盤面座標(positions)の数を上限にして安全化
@@ -56,7 +69,7 @@ export default function Game1() {
     tiles?.length ?? positions.length,
   )
 
-  const SELF_USER_ID = 'TestUser'
+  // const SELF_USER_ID = 'TestUser'
 
   const [step, setStep] = useState(0)
 
@@ -86,7 +99,7 @@ export default function Game1() {
     options: number[]
   } | null>(null)
 
-  // WebSocketコネクション保持（今はフロント管理だが接続は残す）
+  // WebSocketコネクション保持
   const wsRef = useRef<GameSocketConnection | null>(null)
 
   // 現在の駒の描画用座標
@@ -117,90 +130,116 @@ export default function Game1() {
     console.log('[Game1] step (client local position) changed:', step)
   }, [step])
 
-  // ===== WebSocket接続とハンドラ登録 =====
+  // ===== ★ 修正: Firebase認証状態の監視 =====
   useEffect(() => {
-    console.log('[Game1] mounting, connectGameSocket()呼ぶよ')
-
-    const storeActions = useGameStore.getState();
-
-    wsRef.current = connectGameSocket({
-      onDiceResult: (userID, diceValue) => {
-        console.log('[WS] onDiceResult:', { userID, diceValue })
-        if (userID !== SELF_USER_ID) return
-        const v = Math.max(1, Math.min(6, Math.floor(diceValue))) as
-          | 1
-          | 2
-          | 3
-          | 4
-          | 5
-          | 6
-        setLastDiceResult(v)
-      },
-
-      onQuizRequired: (tileID, quizData) => {
-        console.log('[WS] QUIZ_REQUIRED:', { tileID, quizData })
-        useGameStore.getState().setQuizReq({ tileID, quizData })
-        // 必要なら: setActiveEventColor(colorClassOfEvent('quiz' as EventType))
-      },
-
-      onNeighborRequired: (tileID, message) => {
-        console.log('[ws] NEIGHBOR_REQUIRED:',{ tileID, message})
-        storeActions.setNeighborReq({ tileID, message })
-        setActiveEventColor(colorClassOfEvent('neighbor' as EventType))
-      },
-
-      // いずれサーバー権威に戻す時はこれで確定させる。今は参考ログのみ。
-      onMoneyChanged: (userID, newMoney) => {
-        if (userID !== SELF_USER_ID) return
-        console.log('[WS] MONEY_CHANGED for me:', newMoney)
-        setMoney((prev) => {
-          const delta = newMoney - prev
-          if (delta !== 0) {
-            useGameStore.getState().setMoneyChange({ delta })
-          }
-          return newMoney
-        })
-      },
-
-      onGambleResult: (userID, _d, _c, _won, amount, newMoney) => {
-        if (userID !== SELF_USER_ID) return
-        if (amount !== 0) {
-          useGameStore.getState().setMoneyChange({ delta: amount })
+    // (Firebaseが初期化済みであることが前提)
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('[Auth] ログイン済み:', user.uid)
+        setAuthUser(user)
+      } else {
+        console.log('[Auth] ログアウト状態')
+        setAuthUser(null)
+        // ログアウトしたらWSも切断
+        if (wsRef.current) {
+          console.log('[Game1] ログアウトのため WS接続を close() します')
+          wsRef.current.close()
+          wsRef.current = null
         }
-        setMoney(newMoney)
-      },
-
-      onPlayerMoved: (userID, newPosition) => {
-        console.log('[WS] onPlayerMoved:', { userID, newPosition })
-        if (userID !== SELF_USER_ID) return
-        setStep(newPosition) // フロント位置をサーバーに合わせる（将来用）
-        setServerTileID(newPosition)
-
-        storeActions.clearNeighborReq();
-
-        setExpectedFinalStep((prev) => {
-          if (prev !== null && prev !== newPosition) {
-            console.warn('[WS] position mismatch!', {
-              expectedFinalStep: prev,
-              serverStep: newPosition,
-            })
-          }
-          return null
-        })
-      },
-
-      onBranchChoiceRequired: (tileID, options) => {
-        console.log('[WS] onBranchChoiceRequired:', { tileID, options })
-        setBranchChoice({ tileID, options })
-      },
+      }
     })
+    // アンマウント時に監視を解除
+    return () => unsubscribe()
+  }, []) // このuseEffectはマウント時に一度だけ実行されます
 
-    return () => {
-      console.log('[Game1] unmounting, wsRef.current?.close()呼ぶよ')
-      wsRef.current?.close()
-      wsRef.current = null
+  // ===== ★ 修正: WebSocket接続とハンドラ登録 (authUserに依存) =====
+  useEffect(() => {
+    // ログイン済み(authUserあり) で、まだWSに接続していない場合
+    if (authUser && !wsRef.current) {
+      console.log('[Game1] トークン取得して connectGameSocket() 呼びます')
+
+      // authUserからIDトークンを取得 (非同期)
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      authUser
+      getIdToken(authUser)
+        .then((token: string) => {
+          // ★ 既存のハンドラ定義 (これは変更なし)
+          const handlers = {
+            onDiceResult: (userID: string, diceValue: number) => {
+              console.log('[WS] onDiceResult:', { userID, diceValue })
+              // TODO: SELF_USER_ID を Firebase Auth の UID (authUser.uid) と比較するのが望ましい
+              if (!authUser || userID !== authUser.uid) return // ★ authUser.uid と比較
+              const v = Math.max(1, Math.min(6, Math.floor(diceValue))) as
+                | 1 | 2 | 3 | 4 | 5 | 6
+              setLastDiceResult(v)
+            },
+
+            onQuizRequired: (tileID: number, quizData: QuizData) => {
+              console.log('[WS] QUIZ_REQUIRED:', { tileID, quizData })
+              useGameStore.getState().setQuizReq({ tileID, quizData })
+              // 必要なら: setActiveEventColor(colorClassOfEvent('quiz' as EventType))
+            },
+
+            // いずれサーバー権威に戻す時はこれで確定させる。今は参考ログのみ。
+            onMoneyChanged: (userID: string, newMoney: number) => {
+              if (!authUser || userID !== authUser.uid) return // ★ authUser.uid と比較
+              console.log('[WS] MONEY_CHANGED for me:', newMoney)
+              setMoney((prev) => {
+                const delta = newMoney - prev
+                if (delta !== 0) {
+                  useGameStore.getState().setMoneyChange({ delta })
+                }
+                return newMoney
+              })
+            },
+
+            onGambleResult: (
+              userID: string,
+              _d: number,
+              _c: 'High' | 'Low',
+              _won: boolean,
+              amount: number,
+              newMoney: number,
+            ) => {
+              if (!authUser || userID !== authUser.uid) return // ★ authUser.uid と比較
+              if (amount !== 0) {
+                useGameStore.getState().setMoneyChange({ delta: amount })
+              }
+              setMoney(newMoney)
+            },
+
+            onPlayerMoved: (userID: string, newPosition: number) => {
+              // フロー④: サーバーの計算結果はコンソールに表示するだけ
+              console.log('[WS] onPlayerMoved (サーバーの計算結果):', { userID, newPosition })
+              if (!authUser || userID !== authUser.uid) return
+              setServerTileID(newPosition)
+            },
+
+            onBranchChoiceRequired: (tileID: number, options: number[]) => {
+              console.log('[WS] onBranchChoiceRequired:', { tileID, options })
+              setBranchChoice({ tileID, options })
+            },
+          } // ★ ハンドラ定義ここまで
+
+          // ★★★ 修正した connectGameSocket にトークンを渡す！ ★★★
+          wsRef.current = connectGameSocket(handlers, token)
+        })
+        .catch((error: any) => {
+          console.error('[Game1] トークン取得またはWS接続に失敗:', error)
+        })
     }
-  }, [])
+
+    // アンマウント時（ページ遷移など）のクリーンアップ
+    return () => {
+      // wsRef.current が null でない場合 (＝接続が確立されていた場合)
+      if (wsRef.current) {
+        // authUserの変更（ログアウト）時以外でアンマウントされる場合
+        console.log('[Game1] unmounting, wsRef.current?.close() 呼びます')
+        wsRef.current.close()
+        wsRef.current = null
+      }
+    }
+  }, [authUser]) // ★ 依存配列を authUser に変更
 
   // ===== タイル効果の適用（フロント権威：踏破時に即お金を更新） =====
   function runTileEffect(tileId: number) {
@@ -303,6 +342,12 @@ export default function Game1() {
       return
     }
 
+    // ★ 接続チェック (未接続なら何もしない)
+    if (!wsRef.current) {
+      console.error('[Game1] roll: WS未接続！')
+      return
+    }
+
     setIsDiceOpen(true)
     setLastDiceResult(null)
     setExpectedFinalStep(null)
@@ -359,7 +404,7 @@ export default function Game1() {
 
         <DiceButton
           onClick={handleRollClick}
-          disabled={isMoving || !!activeEventColor}
+          disabled={isMoving || !!activeEventColor || !authUser} // ★ 未ログイン時も無効化
           className="absolute right-[3%] bottom-[3%] z-10"
         />
 
@@ -382,21 +427,87 @@ export default function Game1() {
             gridTemplateRows: '18% 20% 18% 26% 18%',
           }}
         >
-          <Tile col={5} row={5} colorClass={colorOf(1)} className="w-full h-full" />
-          <Tile col={3} row={5} colorClass={colorOf(2)} className="w-full h-full" />
-          <Tile col={1} row={5} colorClass={colorOf(3)} className="w-full h-full" />
+          <Tile
+            col={5}
+            row={5}
+            colorClass={colorOf(1)}
+            className="w-full h-full"
+          />
+          <Tile
+            col={3}
+            row={5}
+            colorClass={colorOf(2)}
+            className="w-full h-full"
+          />
+          <Tile
+            col={1}
+            row={5}
+            colorClass={colorOf(3)}
+            className="w-full h-full"
+          />
 
-          <Tile col={1} row={3} colorClass={colorOf(4)} className="w-full h-full" />
-          <Tile col={3} row={3} colorClass={colorOf(5)} className="w-full h-full" />
-          <Tile col={5} row={3} colorClass={colorOf(6)} className="w-full h-full" />
-          <Tile col={7} row={3} colorClass={colorOf(7)} className="w-full h-full" />
-          <Tile col={9} row={3} colorClass={colorOf(8)} className="w-full h-full" />
+          <Tile
+            col={1}
+            row={3}
+            colorClass={colorOf(4)}
+            className="w-full h-full"
+          />
+          <Tile
+            col={3}
+            row={3}
+            colorClass={colorOf(5)}
+            className="w-full h-full"
+          />
+          <Tile
+            col={6} // 元々 5 だったが、 positions に合わせる (6番目は { col: 5, row: 3 })
+            row={3}
+            colorClass={colorOf(6)}
+            className="w-full h-full"
+          // style={{ gridColumn: 5 }} // grid-col-5
+          />
+          <Tile
+            col={7}
+            row={3}
+            colorClass={colorOf(7)}
+            className="w-full h-full"
+          />
+          <Tile
+            col={9}
+            row={3}
+            colorClass={colorOf(8)}
+            className="w-full h-full"
+          />
 
-          <Tile col={9} row={1} colorClass={colorOf(9)} className="w-full h-full" />
-          <Tile col={7} row={1} colorClass={colorOf(10)} className="w-full h-full" />
-          <Tile col={5} row={1} colorClass={colorOf(11)} className="w-full h-full" />
-          <Tile col={3} row={1} colorClass={colorOf(12)} className="w-full h-full" />
-          <Tile col={1} row={1} colorClass={colorOf(13)} className="w-full h-full" />
+          <Tile
+            col={9}
+            row={1}
+            colorClass={colorOf(9)}
+            className="w-full h-full"
+          />
+          <Tile
+            col={7}
+            row={1}
+            colorClass={colorOf(10)}
+            className="w-full h-full"
+          />
+          <Tile
+            col={5}
+            row={1}
+            colorClass={colorOf(11)}
+            className="w-full h-full"
+          />
+          <Tile
+            col={3}
+            row={1}
+            colorClass={colorOf(12)}
+            className="w-full h-full"
+          />
+          <Tile
+            col={1}
+            row={1}
+            colorClass={colorOf(13)}
+            className="w-full h-full"
+          />
         </div>
 
         {/* プレイヤー駒 */}
@@ -453,6 +564,15 @@ export default function Game1() {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ★ 未ログイン時のローディング/エラー表示 */}
+        {!authUser && (
+          <div className="absolute inset-0 z-[300] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="text-white text-2xl font-bold drop-shadow-lg">
+              認証中...
             </div>
           </div>
         )}
