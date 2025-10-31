@@ -53,6 +53,7 @@ export default function Branch({ onClose, options }: BranchProps) {
   const nextPage = currentPage + 1
 
   const [showContent, setShowContent] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [finalChoice, setFinalChoice] = useState<Choice | null>(null)
   const [resultMessage, setResultMessage] = useState<string | null>(null)
   const [isCameraActive, setIsCameraActive] = useState(false)
