@@ -50,7 +50,7 @@ export default function Home() {
               className='absolute top-3 left-10'
             />
             <div className='flex flex-col absolute top-8 right-10'>
-              <Link href={'/'} className='text-2xl font-bold text-blue-default'>
+              <Link href={'/'} className='text-xl font-bold text-blue-default'>
                 戻る
               </Link>
             </div>
@@ -60,21 +60,21 @@ export default function Home() {
             <div className='md:text-4xl text-xl font-bold text-blue-default mb-4'>
               ランキング
             </div>
-            <div className='w-4/5 h-80 overflow-scroll border-2 rounded border-blue-default flex flex-col align-items bg-white '>
+            <div className='w-2/3 h-2/5 overflow-scroll border-2 rounded border-blue-default flex flex-col align-items bg-white '>
               {ranks.map((rank) => (
                 <div
                   key={rank}
-                  className='w-full flex flex-row px-8 py-4 justify-around border-b border-blue-default/20 last:border-b-0'
+                  className='w-full flex flex-row px-4 py-4 justify-around border-b border-blue-default/20 last:border-b-0'
                 >
                   <div className='w-full flex flex-row'>
-                    <p className='px-4 md:text-3xl text-md font-bold text-blue-default whitespace-nowrap'>
+                    <p className='px-4 md:text-2xl text-md font-bold text-blue-default whitespace-nowrap'>
                       {rank}位
                     </p>
-                    <p className='px-4 md:text-3xl text-md font-bold text-blue-default'>
+                    <p className='px-4 md:text-xl text-md w-full font-bold text-blue-default'>
                       ユーザー名
                     </p>
                   </div>
-                  <p className='w-full flex justify-end px-8 md:text-3xl text-md font-bold text-blue-default'>
+                  <p className='whitespace-nowrap flex justify-end px-4 md:text-2xl text-md font-bold text-blue-default'>
                     ○○円
                   </p>
                 </div>
@@ -82,14 +82,14 @@ export default function Home() {
             </div>
             <div className='w-4/5 flex flex-row px-8 py-4 justify-around'>
               <div className='w-full flex flex-row '>
-                <p className='px-4 md:text-3xl text-xl font-bold text-blue-default'>
+                <p className='whitespace-nowrap px-4 md:text-2xl text-xl font-bold text-blue-default'>
                   自分の順位
                 </p>
-                <p className='px-4 md:text-3xl text-xl font-bold text-blue-default'>
+                <p className='whitespace-nowrap px-4 md:text-2xl text-xl font-bold text-blue-default'>
                   1位
                 </p>
               </div>
-              <p className='w-full flex justify-end px-8 md:text-3xl text-xl font-bold text-blue-default'>
+              <p className='whitespace-nowrap w-full flex justify-end px-8 md:text-2xl text-xl font-bold text-blue-default'>
                 ○○円
               </p>
             </div>
