@@ -1,9 +1,11 @@
 // src/lib/game/store.ts
-import type { QuizData } from '@/lib/game/wsClient';
+import type { QuizData, NeighborRequiredPayload, BranchChoiceRequiredPayload } from '@/lib/game/wsClient';
 import { create } from 'zustand';
 
 type QuizReq = { tileID: number; quizData: QuizData } | null
 type MoneyChange = { delta: number } | null
+
+export type NeighborReq = NeighborRequiredPayload | null;
 
 export type GameState = {
   branchCount: number
@@ -14,6 +16,10 @@ export type GameState = {
   quizReq: QuizReq
   setQuizReq: (q: QuizReq) => void         // ←そのままでもOK（nullはclearで消す運用）
   clearQuizReq: () => void
+
+  neighborReq: NeighborReq
+  setNeighborReq: (n: NonNullable<NeighborReq>) => void
+  clearNeighborReq: () => void
 
   moneyChange: MoneyChange
   setMoneyChange: (v: NonNullable<MoneyChange>) => void
@@ -30,6 +36,10 @@ export const useGameStore = create<GameState>((set) => ({
   quizReq: null,
   setQuizReq: (q) => set({ quizReq: q }),
   clearQuizReq: () => set({ quizReq: null }),
+
+  neighborReq: null,
+  setNeighborReq: (n) => set({ neighborReq: n}),
+  clearNeighborReq: () => set({ neighborReq: null}),
 
   // ★ ここを追加
   moneyChange: null,
