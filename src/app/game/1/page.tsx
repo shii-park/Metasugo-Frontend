@@ -70,6 +70,7 @@ export default function Game1() {
   >(null)
 
   const [activeEventColor, setActiveEventColor] = useState<string | null>(null)
+  const [currentEventDetail, setCurrentEventDetail]=useState<string |null>(null)
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
@@ -120,6 +121,8 @@ export default function Game1() {
   useEffect(() => {
     console.log('[Game1] mounting, connectGameSocket()呼ぶよ')
 
+    const storeActions = useGameStore.getState();
+
     wsRef.current = connectGameSocket({
       onDiceResult: (userID, diceValue) => {
         console.log('[WS] onDiceResult:', { userID, diceValue })
@@ -138,6 +141,12 @@ export default function Game1() {
         console.log('[WS] QUIZ_REQUIRED:', { tileID, quizData })
         useGameStore.getState().setQuizReq({ tileID, quizData })
         // 必要なら: setActiveEventColor(colorClassOfEvent('quiz' as EventType))
+      },
+
+      onNeighborRequired: (tileID, message) => {
+        console.log('[ws] NEIGHBOR_REQUIRED:',{ tileID, message})
+        storeActions.setNeighborReq({ tileID, message })
+        setActiveEventColor(colorClassOfEvent('neighbor' as EventType))
       },
 
       // いずれサーバー権威に戻す時はこれで確定させる。今は参考ログのみ。
@@ -166,6 +175,9 @@ export default function Game1() {
         if (userID !== SELF_USER_ID) return
         setStep(newPosition) // フロント位置をサーバーに合わせる（将来用）
         setServerTileID(newPosition)
+
+        storeActions.clearNeighborReq();
+
         setExpectedFinalStep((prev) => {
           if (prev !== null && prev !== newPosition) {
             console.warn('[WS] position mismatch!', {
@@ -257,6 +269,10 @@ export default function Game1() {
     if (pos > 0 && pos <= TOTAL_TILES) {
       const isGoal = pos === TOTAL_TILES
       const GOAL_EVENT_TYPE: EventType = 'branch' // 仮のイベント色
+
+      const currentTile = tileById.get(pos);
+      const tileDetail = currentTile?.detail ?? '';
+
       const tileEventType: EventType | undefined = isGoal
         ? GOAL_EVENT_TYPE
         : kindToEventType(tileById.get(pos)?.kind)
@@ -266,6 +282,13 @@ export default function Game1() {
 
       if (color && EVENT_BY_COLOR[color]) {
         setActiveEventColor(color)
+
+        // if (tileEventType === 'neighbor' || tileEventType === 'normal') {
+        //   setCurrentEventDetail(tileDetail);
+        // } else {
+        //   setCurrentEventDetail(null);
+        // }
+
         if (isGoal) setGoalAwaitingEventClose(true)
       }
     }
@@ -399,6 +422,10 @@ export default function Game1() {
                 ')',
               )
               setActiveEventColor(null)
+              setCurrentEventDetail(null)
+              useGameStore.getState().clearMoneyChange();
+              useGameStore.getState().clearNeighborReq();
+              
               if (goalAwaitingEventClose && !goalPushedRef.current) {
                 goalPushedRef.current = true
                 setGoalAwaitingEventClose(false)

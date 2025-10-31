@@ -113,6 +113,16 @@ export type PlayerStatusChangedMessage = {
   payload: PlayerStatusChangedPayload;
 };
 
+/** NEIGHBOR_REQUIRED */
+export type NeighborRequiredPayload = {
+  tileID: number;
+  message: string;
+};
+export type NeighborRequiredMessage = {
+  type: "NEIGHBOR_REQUIRED";
+  payload: NeighborRequiredPayload;
+};
+
 /** ERROR */
 export type ErrorPayload = {
   message: string;
@@ -139,6 +149,7 @@ export type ServerMessage =
   | GambleResultMessage
   | PlayerFinishedMessage
   | PlayerStatusChangedMessage
+  | NeighborRequiredMessage
   | ErrorMessage;
 
 /* ============================
@@ -206,6 +217,7 @@ export type GameSocketHandlers = {
     amount: number,
     newMoney: number
   ) => void;
+  onNeighborRequired?: (tileID: number, message: string) => void;
   onPlayerFinished?: (userID: string, money: number) => void;
   onPlayerStatusChanged?: (userID: string, status: string, value: boolean | string | number | null) => void;
   onErrorMessage?: (message: string) => void;
@@ -335,6 +347,12 @@ export function connectGameSocket(handlers: GameSocketHandlers): GameSocketConne
     if (msgType === "PLAYER_STATUS_CHANGED") {
       const p = (parsed as PlayerStatusChangedMessage).payload;
       handlers.onPlayerStatusChanged?.(p.userID, p.status, p.value);
+      return;
+    }
+
+    if (msgType === "NEIGHBOR_REQUIRED") {
+      const p = (parsed as NeighborRequiredMessage).payload;
+      handlers.onNeighborRequired?.(p.tileID, p.message);
       return;
     }
 
