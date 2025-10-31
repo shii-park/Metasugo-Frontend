@@ -350,7 +350,7 @@ export default function Game1() {
 
       const tileEventType: EventType | undefined = isGoal
         ? GOAL_EVENT_TYPE
-        : kindToEventType(tileById.get(pos)?.kind)
+        : kindToEventType(currentTile?.kind)
 
       const color = colorClassOfEvent(tileEventType)
       
@@ -583,6 +583,7 @@ export default function Game1() {
                 ')',
               )
               setActiveEventColor(null)
+
               setCurrentEventDetail(null)
               useGameStore.getState().clearMoneyChange();
               useGameStore.getState().clearNeighborReq();
