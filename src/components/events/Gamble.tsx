@@ -9,7 +9,7 @@ const MESSAGE_STEP1_TITLE = "ルール";
 const MESSAGE_STEP1_BODY = [
   "サイコロを1回振り、出た目が",
   "3より大きい(ハイ)か 3以下(ロー)か予想しよう！",
-  "当たったら賭け金の2倍が報酬となり、", // 2倍の報酬
+  "当たったら賭け金の2倍が報酬となり、",
   "外れたら賭け金は没収となるよ"
 ];
 const MESSAGE_STEP1_BUTTON = "理解した";
@@ -17,99 +17,43 @@ const MESSAGE_STEP1_BUTTON = "理解した";
 // --- Props の型定義 ---
 type Props = {
   currentMoney: number;
-  onUpdateMoney: (amount: number) => void;
+  onUpdateMoney: (newTotal: number) => void;
   onClose: () => void;
 };
 
-// === ▼ DiceOverlay.tsx から移植 (ここから) ▼ ===
-
-// サイコロの目の型 (1〜6)
+// === ▼ サイコロのSVG描画コンポーネント ▼ ===
 type DiceFaceValue = 1 | 2 | 3 | 4 | 5 | 6;
-
-/**
- * サイコロの面（SVG）を描画するコンポーネント
- */
-function DiceFace({
-  value,
-  size = 128,
-}: {
-  value: DiceFaceValue
-  size?: number
-}) {
-  const pos = {
-    tl: { cx: 24, cy: 24 },
-    tr: { cx: 72, cy: 24 },
-    ml: { cx: 24, cy: 48 },
-    mm: { cx: 48, cy: 48 },
-    mr: { cx: 72, cy: 48 },
-    bl: { cx: 24, cy: 72 },
-    br: { cx: 72, cy: 72 },
-  } as const
-
-  const map: Record<DiceFaceValue, Array<keyof typeof pos>> = {
-    1: ['mm'],
-    2: ['tl', 'br'],
-    3: ['tl', 'mm', 'br'],
-    4: ['tl', 'tr', 'bl', 'br'],
-    5: ['tl', 'tr', 'mm', 'bl', 'br'],
-    6: ['tl', 'ml', 'bl', 'tr', 'mr', 'br'],
-  }
-
+function DiceFace({ value, size = 128 }: { value: DiceFaceValue; size?: number }) {
+  const pos = { tl: { cx: 24, cy: 24 }, tr: { cx: 72, cy: 24 }, ml: { cx: 24, cy: 48 }, mm: { cx: 48, cy: 48 }, mr: { cx: 72, cy: 48 }, bl: { cx: 24, cy: 72 }, br: { cx: 72, cy: 72 } } as const;
+  const map: Record<DiceFaceValue, Array<keyof typeof pos>> = { 1: ['mm'], 2: ['tl', 'br'], 3: ['tl', 'mm', 'br'], 4: ['tl', 'tr', 'bl', 'br'], 5: ['tl', 'tr', 'mm', 'bl', 'br'], 6: ['tl', 'ml', 'bl', 'tr', 'mr', 'br'] };
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox='0 0 96 96'
-      role='img'
-      aria-label={`サイコロの目は ${value}`}
-    >
-      <rect
-        x='4'
-        y='4'
-        width='88'
-        height='88'
-        rx='14'
-        fill='white'
-        stroke='rgba(0,0,0,0.08)'
-        strokeWidth='2'
-      />
-      {map[value].map((k) => (
-        <circle key={k} cx={pos[k].cx} cy={pos[k].cy} r={8} fill='black' />
-      ))}
+    <svg width={size} height={size} viewBox='0 0 96 96' role='img' aria-label={`サイコロの目は ${value}`}>
+      <rect x='4' y='4' width='88' height='88' rx='14' fill='white' stroke='rgba(0,0,0,0.08)' strokeWidth='2' />
+      {map[value].map((k) => (<circle key={k} cx={pos[k].cx} cy={pos[k].cy} r={8} fill='black' />))}
     </svg>
-  )
+  );
 }
-
-// === ▲ DiceOverlay.tsx から移植 (ここまで) ▲ ===
+// === ▲ サイコロのSVG描画コンポーネント ▲ ===
 
 
 // --- メインコンポーネント ---
 export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Props) {
   
   // --- ステート管理 ---
-  /**
-   * 0: 導入, 1: ルール, 2: 賭け金
-   * 3: ハイロー選択
-   * 4: 演出中
-   * 5: 結果
-   */
   const [step, setStep] = useState(0); 
-  
   const [betAmount, setBetAmount] = useState<string>("");
   const [betError, setBetError] = useState<string>("");
   const [choice, setChoice] = useState<'High' | 'Low' | null>(null);
   const [diceResult, setDiceResult] = useState(0); 
   const [gameWon, setGameWon] = useState(false); 
-  const [resultAmount, setResultAmount] = useState(0); // 賭け金(bet)を保存する
+  const [resultAmount, setResultAmount] = useState(0); 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- 演出用の useEffect ---
   useEffect(() => {
-    if (step === 4) { // 演出ステップ
-      const animationDuration = 2000; // 2秒間
-      const timer = setTimeout(() => {
-        setStep(5); // 結果ステップへ
-      }, animationDuration); 
+    if (step === 4) { 
+      const animationDuration = 2000; 
+      const timer = setTimeout(() => { setStep(5); }, animationDuration); 
       return () => clearTimeout(timer);
     }
   }, [step]); 
@@ -122,9 +66,6 @@ export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Prop
     else if (step === 5) onClose(); 
   };
 
-  /**
-   * (ステップ 2) 「決定」ボタン (賭け金のみ)
-   */
   const handleBetSubmit = () => {
     const bet = parseInt(betAmount, 10);
     if (isNaN(bet) || bet <= 0) {
@@ -136,12 +77,11 @@ export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Prop
       return;
     }
     setBetError("");
-    setStep(3); // 次のステップ（ハイロー選択）へ
+    setStep(3); 
   };
 
   /**
-   * (ステップ 3) 「決定」ボタン (ハイロー選択後)
-   * API通信を実行
+   * (ステップ 3) 「決定」ボタン (API通信)
    */
   const handleChoiceSubmit = async () => {
     if (!choice) {
@@ -156,50 +96,52 @@ export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Prop
     const bet = parseInt(betAmount, 10);
 
     try {
-      // 2. バックエンドに賭け金と予想を送信
-      const response = await fetch('/api/game/submit-gamble', { // 404だったAPI
+      const response = await fetch('/api/game/submit-gamble', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           type: "SUBMIT_GAMBLE",
-          payload: {
-            bet: bet,
-            choice: choice
-          }
+          payload: { bet, choice }
         }),
       });
 
-      if (!response.ok) {
-        // 404エラーなどはここでキャッチされる
-        throw new Error('APIリクエストに失敗');
-      }
+      if (!response.ok) { throw new Error('APIリクエストに失敗'); }
 
-      // 3. バックエンドから「GAMBLE_RESULT」を受け取る
       const data: { 
         type: "GAMBLE_RESULT", 
         payload: {
           diceResult: number,
           choice: "High" | "Low",
           won: boolean,
-          amount: number, // 賭け金がそのまま返ってくる
-          newMoney: number 
+          amount: number, // 賭け金
+          newMoney: number // 1万円が返ってきてしまう (使わない)
         } 
       } = await response.json();
 
       const payload = data.payload;
 
-      // 4. 結果をステートに保存
       setDiceResult(payload.diceResult);
       setGameWon(payload.won);
       setResultAmount(payload.amount); // 賭け金(bet)を保存
 
-      // 5. 親コンポーネントの所持金を更新
-      // ★ご要望: 2倍の報酬★
+      // --- ▼▼▼ ここからがバグ修正 ▼▼▼ ---
+      
+      // 5. APIが返す payload.newMoney (1万円) は無視する
+
+      let newTotal: number;
       if (payload.won) {
-        onUpdateMoney(payload.amount * 2); // 勝ち (賭け金の2倍を渡す)
+        // 勝ち: 現在の所持金 + (賭け金 * 2)
+        // (※ currentMoney は props で受け取った 100万円)
+        newTotal = currentMoney + (payload.amount * 2);
       } else {
-        onUpdateMoney(-payload.amount);    // 負け (賭け金をマイナスで渡す)
+        // 負け: 現在の所持金 - 賭け金
+        newTotal = currentMoney - payload.amount;
       }
+      
+      // フロントエンドで計算した「新しい総額」を親に渡す
+      onUpdateMoney(newTotal);
+      
+      // --- ▲▲▲ バグ修正ここまで ▲▲▲ ---
       
       setStep(4); // 「演出中(4)」ステップに進む
 
@@ -213,7 +155,7 @@ export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Prop
 
   // --- 各ステップの描画関数 ---
 
-  // ステップ 0: 導入（吹き出し）
+  // ステップ 0: 導入
   const renderStep0 = () => (
     <div className="absolute z-50 left-[5%] right-[5%] bottom-[6%]"> 
       <div className="rounded-xl border-2 border-white/90 bg-white/90 backdrop-blur-sm shadow-lg p-4 md:p-5">
@@ -226,7 +168,7 @@ export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Prop
     </div>
   );
 
-  // ステップ 1: ルール説明（中央モーダル）
+  // ステップ 1: ルール
   const renderStep1 = () => (
     <div className="absolute z-50 inset-0 flex items-center justify-center p-4">
       <div 
@@ -307,20 +249,14 @@ export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Prop
         <div className="flex justify-around gap-4 mb-6">
           <button 
             className={`w-1/2 py-3 rounded-lg font-bold text-white transition-all ${choice === 'High' ? 'bg-purple-700 ring-2 ring-purple-900' : 'bg-purple-500 hover:bg-purple-600'}`}
-            onClick={() => {
-              setChoice('High');
-              setBetError("");
-            }}
+            onClick={() => { setChoice('High'); setBetError(""); }}
             disabled={isSubmitting} 
           >
             ハイ (4, 5, 6)
           </button>
           <button 
             className={`w-1/2 py-3 rounded-lg font-bold text-white transition-all ${choice === 'Low' ? 'bg-purple-700 ring-2 ring-purple-900' : 'bg-purple-500 hover:bg-purple-600'}`}
-            onClick={() => {
-              setChoice('Low');
-              setBetError("");
-            }}
+            onClick={() => { setChoice('Low'); setBetError(""); }}
             disabled={isSubmitting} 
           >
             ロー (1, 2, 3)
@@ -332,7 +268,7 @@ export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Prop
         <div className="mt-6 text-center">
           <button 
             className="px-8 py-3 rounded-lg bg-gray-600 text-white font-bold text-lg disabled:bg-gray-400" 
-            onClick={handleChoiceSubmit} // API通信を実行
+            onClick={handleChoiceSubmit} 
             disabled={isSubmitting || !choice} 
           >
             {isSubmitting ? "通信中..." : "決定"}
@@ -343,32 +279,20 @@ export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Prop
   );
 
   // --- ▼▼▼ SVG演出 ▼▼▼ ---
-
-  /**
-   * ステップ 4: 演出用コンポーネント
-   */
   const DiceRollAnimation = () => {
     const [rollingFace, setRollingFace] = useState<DiceFaceValue>(1);
-
     useEffect(() => {
-      // 100ms ごとに表示する目を 1 -> 2 -> ... -> 6 -> 1 と変える
       const rollInterval = setInterval(() => {
         setRollingFace((prev) => ((prev % 6) + 1) as DiceFaceValue);
       }, 100); 
-
       return () => clearInterval(rollInterval);
     }, []); 
-
     return (
       <div className="flex justify-center items-center h-40">
         <DiceFace value={rollingFace} size={160} />
       </div>
     );
   };
-
-  /**
-   * ステップ 4: 演出画面 (DiceRollAnimation を呼び出す)
-   */
   const renderStep4 = () => (
     <div className="absolute z-50 inset-0 flex items-center justify-center p-4">
       <div 
@@ -381,20 +305,15 @@ export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Prop
       </div>
     </div>
   );
-  
   // --- ▲▲▲ 演出部分ここまで ▲▲▲ ---
 
   // ステップ 5: 結果表示
   const renderStep5 = () => {
     const isWin = gameWon;
     const message1 = isWin ? "賭けに勝った！" : "賭けに負けた…";
-    
-    // ★ご要望: 2倍の報酬を表示★
-    // resultAmount には元の賭け金が入っている
     const message2 = isWin 
-      ? `${(resultAmount * 2).toLocaleString()}円 取得` // 2倍の金額を表示
+      ? `${(resultAmount * 2).toLocaleString()}円 取得` 
       : `${resultAmount.toLocaleString()}円 没収`;
-
     return (
       <div className="absolute z-50 left-[5%] right-[5%] bottom-[6%]"> 
         <div className={`rounded-xl border-2 ${isWin ? 'border-yellow-400' : 'border-blue-400'} bg-white/90 backdrop-blur-sm shadow-lg p-4 md:p-5`}>
@@ -432,7 +351,6 @@ export default function MoneyPlus({ currentMoney, onUpdateMoney, onClose }: Prop
     <div 
       className="absolute z-50 inset-0 cursor-pointer" 
       onClick={
-        // 0, 1, 5 (結果表示) は背景タップで進行
         (step === 0 || step === 1 || step === 5) ? handleAdvance : undefined
       } 
     >
