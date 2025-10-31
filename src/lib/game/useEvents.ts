@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 import type { EventsResponse, TileEvent } from '@/app/api/game/type'
 import { useEffect, useMemo, useState } from 'react'

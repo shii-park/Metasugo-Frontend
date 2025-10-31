@@ -3,8 +3,8 @@ import type { TileKind } from './useTiles';
 
 export function kindToEventType(kind?: TileKind): EventType | undefined {
   switch (kind) {
-    case 'profit':     return 'money_plus';
-    case 'loss':       return 'money_minus';
+    // case 'profit':     return 'money_plus';
+    // case 'loss':       return 'money_minus';
     case 'quiz':       return 'quiz';
     case 'branch':     return 'branch';
     // case 'overall':    return 'overall';

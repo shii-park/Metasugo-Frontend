@@ -9,8 +9,10 @@
 //     uid: string;
 //   }
 
-//   // Auth本体。中身まではここでは使わないので空オブジェクト型でOK
-//   export type Auth = object
+  // Auth本体。中身まではここでは使わないので空オブジェクト型でOK
+  export interface Auth { // ★ 'type Auth = object' から 'interface Auth' に変更
+    currentUser: User | null; // ★ この行を追加
+  }
 
 //   // getAuth(app) -> Auth
 //   // app は firebase/app で作ったやつが入るけど、ここでは {} 型で十分

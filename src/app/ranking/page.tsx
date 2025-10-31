@@ -25,7 +25,7 @@ export default function Ranking() {
       console.log('🚪 未ログインのため /signin にリダイレクト')
       router.push('/signin')
     }
-  }, [user?.uid, loading, router])
+  }, [loading, router, user])
 
   // --- ランキング取得 ---
   useEffect(() => {
@@ -56,6 +56,7 @@ export default function Ranking() {
         data.sort((a, b) => b.money - a.money)
         setPlayers(data)
         console.log('🔽 ソート後のランキングデータ:', data)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error('❌ ランキング取得エラー:', error)
         setFetchError(error.message)
@@ -63,7 +64,7 @@ export default function Ranking() {
     }
 
     fetchRanking()
-  }, [user?.uid])
+  }, [user])
 
   if (loading) {
     return (
@@ -102,6 +103,7 @@ export default function Ranking() {
         <div className='relative w-full h-full max-w-[177.78vh] max-h-[56.25vw] aspect-video bg-[#E3DECF] py-2 px-4'>
           {/* ヘッダー */}
           <div className='flex'>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src='/logo.svg' alt='ロゴ' className='absolute top-3 left-10' />
             <div className='flex flex-col absolute top-8 right-10'>
               <Link href='/' className='text-xl font-bold text-blue-default'>
