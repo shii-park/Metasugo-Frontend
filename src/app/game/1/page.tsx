@@ -111,6 +111,7 @@ export default function Game1() {
 
   const [activeEventColor, setActiveEventColor] = useState<string | null>(null)
   const [currentEventDetail, setCurrentEventDetail]=useState<string |null>(null)
+
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
@@ -352,10 +353,18 @@ export default function Game1() {
         : kindToEventType(tileById.get(pos)?.kind)
 
       const color = colorClassOfEvent(tileEventType)
+      
       console.log('[Game1] tileEventType=', tileEventType, 'color=', color)
 
       if (color && EVENT_BY_COLOR[color]) {
         setActiveEventColor(color)
+
+        if (tileEventType === 'overall' || tileEventType === 'neighbor'){
+          console.log("[DUBUG] Setting EventDetail:", tileDetail);
+          setCurrentEventDetail(tileDetail);
+        }else{
+          // console.log("[DEBUG] Clearing EventDetail.");
+        }
 
         // if (tileEventType === 'neighbor' || tileEventType === 'normal') {
         //   setCurrentEventDetail(tileDetail);
@@ -364,7 +373,9 @@ export default function Game1() {
         // }
 
         if (isGoal) setGoalAwaitingEventClose(true)
-      }
+      } else {
+    setCurrentEventDetail(null);
+  }
     }
   }
 
@@ -564,6 +575,7 @@ export default function Game1() {
         {/* ゴール等のイベントモーダル */}
         {EventComp && (
           <EventComp
+            eventMessage={currentEventDetail ?? ''}
             onClose={() => {
               console.log(
                 '[Game1] EventComp onClose (activeEventColor=',

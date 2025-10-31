@@ -1,17 +1,18 @@
 // 例: components/events/MoneyPlus.tsx
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // const MESSAGES = "右隣にいる人にお金を渡す\n2000円減った";
 
 type Props = {
-  eventMessage: string;
+  eventMessage: string | null | undefined;
   onClose: () => void;
 }
 
 export default function Neighbor({ eventMessage, onClose}: Props) {
   const [showContent, setShowContent] = useState(false)
+
 
   const handleAdvance = () =>{
     if (showContent){
@@ -22,7 +23,7 @@ export default function Neighbor({ eventMessage, onClose}: Props) {
   };
 
   const isTitleOnly = !showContent;
-  const contentLines = eventMessage.split('\n');
+  const contentLines = (eventMessage ?? '').split('\n');
 
   return (
     <div className="absolute z-50 inset-0 cursor-pointer" onClick={handleAdvance}>
