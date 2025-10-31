@@ -320,6 +320,7 @@ export function connectGameSocket(
     // ★ 注意: サーバーが snake_case で送ってくる場合、ここでマッピングが必要
     // もしDICE_RESULTがsnake_case (user_id, dice_result) の場合:
     if (msgType === 'DICE_RESULT') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const p = (parsed as any).payload // anyで受け取る
       // snake_case/camelCase 両対応 (サーバーの実装に合わせて調整)
       const userID = p.userID ?? p.user_id

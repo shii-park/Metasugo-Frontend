@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import Image from 'next/image'
@@ -6,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 // ★ Firebase Auth から必要な関数をインポート
 // ★ Firebase Auth からは onAuthStateChanged と User型 (別名で) のみインポート
-import { onAuthStateChanged, User as FirebaseUser, getIdToken } from 'firebase/auth'
+import { User as FirebaseUser, getIdToken, onAuthStateChanged } from 'firebase/auth'
 // ★ firebase.ts から 'auth' インスタンスを直接インポート
 import { auth } from '@/firebase'
 
