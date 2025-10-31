@@ -92,10 +92,7 @@ export type UseTilesResult = {
   error: string | null
 }
 
-/**
- * /tiles をバックエンドから取得するフック
- * - AuthContext の user / loading を監視して、ログイン完了後にだけ fetch
- */
+// デプロイ先のURLでやる
 export function useTiles(src: string = 'http://localhost:8080/tiles'): UseTilesResult {
   const { user, loading: authLoading } = useAuth()
   const [tiles, setTiles] = useState<Tile[] | null>(null)

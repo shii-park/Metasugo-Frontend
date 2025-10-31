@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import GameBoard from './GameBoard'; // GameBoardコンポーネントをインポート
+import GameBoard from './gameboard'; // GameBoardコンポーネントをインポート
 
 // --- テスト用のダミーのボードレイアウトデータ ---
 // ★ 要変更: あなたのゲームのレイアウトに合わせてください
