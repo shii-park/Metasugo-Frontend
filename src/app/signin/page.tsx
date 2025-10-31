@@ -14,9 +14,13 @@ export default function SignIn() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
+  
     try {
-      await login(email, password);
+      const { user, token } = await login(email, password);
+      // トークンとユーザー情報を保存
+      localStorage.setItem("user", JSON.stringify({ uid: user.uid, email: user.email }));
+      localStorage.setItem("token", token);
+  
       router.push("/"); // ログイン後に遷移
     } catch (err: any) {
       const message =

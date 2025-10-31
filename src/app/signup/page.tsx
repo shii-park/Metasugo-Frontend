@@ -15,25 +15,19 @@ export default function SignUp() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(""); 
-
+  
     if (password !== confirmPassword) {
       setErrorMessage("パスワードが一致しません。");
       return;
     }
-
+  
     try {
-      console.log("サインアップ開始");
-      const userData = await signup(email, password);
-      console.log("サインアップ成功:", userData);
-
-      localStorage.setItem("user", JSON.stringify(userData));
-
-      console.log("ホーム画面へ遷移します");
+      const { user, token } = await signup(email, password);
+      localStorage.setItem("user", JSON.stringify({ uid: user.uid, email: user.email }));
+      localStorage.setItem("token", token);
+  
       router.push("/"); // 登録後に遷移
     } catch (error: any) {
-      console.error("サインアップエラー:", error);
-
-      // Firebaseのエラーコードに応じたメッセージを表示
       if (error.code === "auth/email-already-in-use") {
         setErrorMessage("このメールアドレスは既に登録されています。");
       } else if (error.code === "auth/invalid-email") {

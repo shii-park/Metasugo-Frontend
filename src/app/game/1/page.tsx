@@ -47,6 +47,7 @@ const PAD_BOTTOM = 7
 export default function Game1() {
   const router = useRouter()
   const goalPushedRef = useRef(false)
+  const [token, setToken] = useState<string | undefined>(undefined)
 
   const { byId: tileById, tiles } = useTiles()
   // 盤面座標(positions)の数を上限にして安全化
