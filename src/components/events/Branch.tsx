@@ -13,7 +13,10 @@ type BranchProps = {
   options?: [number, number] | null
 }
 
-const PAGE_COPY: Record<number, { title: string; message: string; ans: string[] }> = {
+const PAGE_COPY: Record<
+  number,
+  { title: string; message: string; ans: string[] }
+> = {
   1: {
     title: '【条件分岐マス：1ページ目】',
     message: '教員になったから働き方は考えないとな、何を使おう',
@@ -49,7 +52,10 @@ export default function Branch({ onClose, options }: BranchProps) {
   const setRouting = useGameStore((s) => s.setRouting)
   const incrementBranch = useGameStore((s) => s.incrementBranch)
 
-  const currentPage = useMemo(() => getCurrentPageFromPath(pathname), [pathname])
+  const currentPage = useMemo(
+    () => getCurrentPageFromPath(pathname),
+    [pathname],
+  )
   const nextPage = currentPage + 1
 
   const [showContent, setShowContent] = useState(false)
@@ -77,7 +83,9 @@ export default function Branch({ onClose, options }: BranchProps) {
     stopCamera()
 
     const correct = PAGE_COPY[currentPage]?.ans ?? []
-    const isCorrect = correct.some((ans) => ans.toLowerCase() === data.toLowerCase())
+    const isCorrect = correct.some(
+      (ans) => ans.toLowerCase() === data.toLowerCase(),
+    )
     const choice: Choice = isCorrect ? 'a' : 'b'
 
     setFinalChoice(choice)
@@ -190,35 +198,50 @@ export default function Branch({ onClose, options }: BranchProps) {
 
   return (
     <div
-      className="absolute z-50 inset-0 cursor-pointer"
+      className='absolute z-50 inset-0 cursor-pointer'
       onClick={isTitleOnly ? handleAdvance : undefined}
     >
       {/* タイトル表示 */}
+      {/* タイトル表示（クリック前） */}
       {isTitleOnly ? (
-        <div className="absolute z-50 left-[5%] right-[5%] bottom-[6%]">
-          <div className="rounded-xl border-2 border-black/90 bg-white/90 backdrop-blur-sm shadow-lg p-4 md:p-5">
-            <p className="font-bold mb-2 text-[#5B7BA6] text-2xl">
+        <div className='absolute z-50 left-[5%] right-[5%] bottom-[6%]'>
+          <div className='rounded-xl border-2 border-black/90 bg-white/90 backdrop-blur-sm shadow-lg p-4 md:p-5'>
+            <p className='font-bold mb-2 text-[#5B7BA6] text-2xl'>
               {resultMessage ?? copy.title}
             </p>
+            {/* ★ここを追加：メッセージ本文を表示 */}
+            {!resultMessage && (
+              <p className='text-black/90 text-lg leading-relaxed'>
+                {copy.message}
+              </p>
+            )}
           </div>
         </div>
       ) : (
-        <div className="flex justify-center items-center w-full h-full">
+        <div className='flex justify-center items-center w-full h-full'>
           {/* 選択肢ボックス */}
-          <div className="rounded-[6] border-2 border-black/90 bg-white/90 backdrop-blur-sm shadow-lg p-5 w-5/8 text-center">
-            <p className="font-bold mb-2 text-[#5B7BA6] text-2xl">選択肢を教室内から探し出そう</p>
-            <div className="flex flex-col space-y-3">
+          <div className='rounded-[6] border-2 border-black/90 bg-white/90 backdrop-blur-sm shadow-lg p-5 w-5/8 text-center'>
+            {/* ★ここを追加：選択肢画面でもメッセージを上部に表示 */}
+            <p className='font-bold mb-2 text-[#5B7BA6] text-xl'>
+              {copy.title}
+            </p>
+            <p className='mb-4 text-black/90'>{copy.message}</p>
+
+            <p className='font-bold mb-2 text-[#5B7BA6] text-2xl'>
+              選択肢を教室内から探し出そう
+            </p>
+            <div className='flex flex-col space-y-3'>
               <button
-                className="flex font-bold text-white text-2xl justify-center items-center bg-[#ccb173] rounded-xl p-4"
+                className='flex font-bold text-white text-2xl justify-center items-center bg-[#ccb173] rounded-xl p-4'
                 onClick={() => go('a')}
                 disabled={submitting}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/QR_example.svg" alt="QRコード" className="pr-3" />
+                <img src='/QR_example.svg' alt='QRコード' className='pr-3' />
                 QRコードを読み取る
               </button>
               <button
-                className="font-bold text-white text-2xl bg-[#ccb173] rounded-xl p-4"
+                className='font-bold text-white text-2xl bg-[#ccb173] rounded-xl p-4'
                 onClick={() => go('b')}
                 disabled={submitting}
               >
@@ -231,25 +254,25 @@ export default function Branch({ onClose, options }: BranchProps) {
 
       {/* カメラプレビュー */}
       {isCameraActive && (
-        <div className="absolute inset-0 flex justify-center items-center z-50">
+        <div className='absolute inset-0 flex justify-center items-center z-50'>
           <video
             ref={videoRef}
-            className="w-[70%] max-w-md aspect-video object-cover rounded-xl border-2 border-black shadow-lg"
+            className='w-[70%] max-w-md aspect-video object-cover rounded-xl border-2 border-black shadow-lg'
             autoPlay
             muted
             playsInline
           />
           <button
             onClick={stopCamera}
-            className="absolute top-5 right-5 text-white font-bold bg-red-500 rounded-full w-10 h-10 flex justify-center items-center text-2xl"
-            aria-label="カメラ閉じる"
+            className='absolute top-5 right-5 text-white font-bold bg-red-500 rounded-full w-10 h-10 flex justify-center items-center text-2xl'
+            aria-label='カメラ閉じる'
           >
             ×
           </button>
         </div>
       )}
 
-      <canvas ref={canvasRef} className="hidden" />
+      <canvas ref={canvasRef} className='hidden' />
     </div>
   )
 }

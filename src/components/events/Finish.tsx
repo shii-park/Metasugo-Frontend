@@ -12,16 +12,17 @@ type FinishProps = {
 
 export default function Finish({
   title = 'ゴール！',
-  message = '',
   onClose,
 }: FinishProps) {
   const router = useRouter()
   const setRouting = useGameStore((s) => s.setRouting)
 
-  const goHome = () => {
-    // 念のためWSが残っていれば閉じる
-    getActiveSocket()?.close()
+  // 🪙 合計金額を store から取得
+  const totalMoney = useGameStore((s) => s.money) // ← store 側で money を保持している前提
+  // もし store に money がない場合は props 経由に変更も可
 
+  const goHome = () => {
+    getActiveSocket()?.close()
     setRouting(true)
     onClose?.()
     router.push('/')
@@ -29,7 +30,6 @@ export default function Finish({
 
   const restart = () => {
     getActiveSocket()?.close()
-
     setRouting(true)
     onClose?.()
     router.push('/game/1')
@@ -46,10 +46,10 @@ export default function Finish({
       >
         <div className="text-[#5B7BA6] text-3xl font-bold m-4">{title}</div>
 
+        {/* 💰 合計金額表示 */}
         <div className="font-bold rounded-md bg-white text-l text-[#5B7BA6] flex-col items-center justify-center px-6 py-4 mb-4 w-3/5 mx-auto">
           <p className="flex justify-between w-full">
-            <span>合計金額</span>
-            <span>{message || '○○円'}</span>
+            <p>これでゲームは終了です！</p>
           </p>
         </div>
 
