@@ -7,7 +7,7 @@ type Props = {
   eventMessage: string;
   onClose: () => void;
 }
-export default function Global({ props: Props) {
+export default function Global( props: Props) {
   const { eventMessage, onClose} = props;
 
   const [showContent, setShowContent]=useState(false);
