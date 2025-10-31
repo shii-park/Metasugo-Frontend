@@ -110,12 +110,8 @@ export default function Game1() {
   >(null)
 
   const [activeEventColor, setActiveEventColor] = useState<string | null>(null)
-<<<<<<< HEAD
-  const [currentEventDetail, setCurrentEventDetail] = useState<string | null>(null)
-=======
   const [currentEventDetail, setCurrentEventDetail]=useState<string |null>(null)
 
->>>>>>> 7d771991ab8f5ee075c36d27c1e04b42d37af443
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
@@ -351,10 +347,7 @@ export default function Game1() {
 
       const currentTile = tileById.get(pos);
       const tileDetail = currentTile?.detail ?? '';
-<<<<<<< HEAD
-=======
 
->>>>>>> 7d771991ab8f5ee075c36d27c1e04b42d37af443
       const tileEventType: EventType | undefined = isGoal
         ? GOAL_EVENT_TYPE
         : kindToEventType(currentTile?.kind)
@@ -367,10 +360,6 @@ export default function Game1() {
         setActiveEventColor(color)
 
         if (tileEventType === 'overall' || tileEventType === 'neighbor'){
-<<<<<<< HEAD
-          setCurrentEventDetail(tileDetail);
-        }
-=======
           console.log("[DUBUG] Setting EventDetail:", tileDetail);
           setCurrentEventDetail(tileDetail);
         }else{
@@ -383,7 +372,6 @@ export default function Game1() {
         //   setCurrentEventDetail(null);
         // }
 
->>>>>>> 7d771991ab8f5ee075c36d27c1e04b42d37af443
         if (isGoal) setGoalAwaitingEventClose(true)
       } else {
     setCurrentEventDetail(null);
@@ -595,16 +583,11 @@ export default function Game1() {
                 ')',
               )
               setActiveEventColor(null)
-<<<<<<< HEAD
 
-              setCurrentEventDetail(null)
-
-=======
               setCurrentEventDetail(null)
               useGameStore.getState().clearMoneyChange();
               useGameStore.getState().clearNeighborReq();
               
->>>>>>> 7d771991ab8f5ee075c36d27c1e04b42d37af443
               if (goalAwaitingEventClose && !goalPushedRef.current) {
                 goalPushedRef.current = true
                 setGoalAwaitingEventClose(false)
