@@ -22,6 +22,7 @@ import DiceOverlay from '@/components/game/DiceOverlay'
 import GameHUD from '@/components/game/GameHUD'
 import Player from '@/components/game/Player'
 import SettingsMenu from '@/components/game/SettingMenu'
+import Status from '@/components/game/Status'
 import Tile from '@/components/game/Tile'
 
 import { colorClassOfEvent } from '@/lib/game/eventColor'
@@ -418,6 +419,9 @@ export default function Game1() {
 
         <div className='absolute top-[3%] right-[6%]'>
           <SettingsMenu sizePct={8} className='w-1/5 z-10' />
+        </div>
+        <div className="absolute top-[15%] left-[3%] z-10">
+          <Status/>
         </div>
 
         <div className='absolute bottom-[10%] sm:bottom-[12%] right-[18%] rounded-md bg-brown-default/90 text-white border-2 border-white px-4 py-2 md:py-8 md:px-12 font-bold text-xl md:text-3xl'>
