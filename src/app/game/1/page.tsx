@@ -102,10 +102,10 @@ export default function Game1() {
   const [currentEventDetail, setCurrentEventDetail]=useState<string |null>(null)
 
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
-  
+
   // ★ Gamble (MoneyPlus) に渡すための所持金 State
   // (※) 100万円の初期値はここ (親ページ) で設定
-  const [money, setMoney] = useState<number>(1000000) 
+  const [money, setMoney] = useState<number>(1000000)
 
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
@@ -139,7 +139,7 @@ export default function Game1() {
       }
     })
     return () => unsubscribe()
-  }, []) 
+  }, [])
 
   // ===== ★ WebSocket接続とハンドラ登録 (authUserに依存) =====
   useEffect(() => {
@@ -152,7 +152,7 @@ export default function Game1() {
           const handlers = {
             onDiceResult: (userID: string, diceValue: number) => {
               console.log('[WS] onDiceResult:', { userID, diceValue })
-              if (!authUser || userID !== authUser.uid) return 
+              if (!authUser || userID !== authUser.uid) return
               const v = Math.max(1, Math.min(6, Math.floor(diceValue))) as
                 | 1 | 2 | 3 | 4 | 5 | 6
               setLastDiceResult(v)
@@ -165,13 +165,13 @@ export default function Game1() {
 
             // ★ 変更点: WSから所持金総額が送られてきたら、setMoneyで更新
             onMoneyChanged: (userID: string, newMoney: number) => {
-              if (!authUser || userID !== authUser.uid) return 
+              if (!authUser || userID !== authUser.uid) return
               console.log('[WS] MONEY_CHANGED for me:', newMoney)
               setMoney((prev) => {
                 const delta = newMoney - prev
                 if (delta !== 0) {
                   // MoneyMinus 用に差額をストアに保存
-                  useGameStore.getState().setMoneyChange({ delta }) 
+                  useGameStore.getState().setMoneyChange({ delta })
                 }
                 return newMoney // ★ 総額を更新
               })
@@ -186,15 +186,15 @@ export default function Game1() {
               amount: number,
               newMoney: number,
             ) => {
-              if (!authUser || userID !== authUser.uid) return 
-              
+              if (!authUser || userID !== authUser.uid) return
+
               // Gamble.tsx がAPIを呼ぶので、このWSハンドラは不要かもしれないが、
               // 他プレイヤーのGamble結果を反映するために残す
-              
+
               // もし Gamble.tsx がWSで通信する場合、
               // このハンドラがGambleの結果を受け取る唯一の方法になる
               // その場合、setMoney(newMoney) で総額を更新する
-              
+
               console.log('[WS] GAMBLE_RESULT for me:', newMoney)
               // (※) Gamble.tsx のAPI通信が成功すると、そのレスポンスで
               // onUpdateMoney(newMoney) が呼ばれ setMoney が更新される。
@@ -216,7 +216,7 @@ export default function Game1() {
               console.log('[WS] onBranchChoiceRequired:', { tileID, options })
               setBranchChoice({ tileID, options })
             },
-          } 
+          }
 
           wsRef.current = connectGameSocket(handlers, token)
         })
@@ -232,7 +232,7 @@ export default function Game1() {
         wsRef.current = null
       }
     }
-  }, [authUser]) 
+  }, [authUser])
 
   // ===== タイル効果の適用（フロント権威：踏破時に即お金を更新） =====
   function runTileEffect(tileId: number) {
@@ -283,7 +283,7 @@ export default function Game1() {
     }
     setIsMoving(false)
     console.log('[Game1] moveBy done. final pos=', pos)
-    setExpectedFinalStep(pos) 
+    setExpectedFinalStep(pos)
 
     // お金増減イベントを即時適用
     if (pos > 0 && pos <= TOTAL_TILES) {
@@ -303,7 +303,7 @@ export default function Game1() {
         : kindToEventType(currentTile?.kind)
 
       const color = colorClassOfEvent(tileEventType)
-      
+
       console.log('[Game1] tileEventType=', tileEventType, 'color=', color)
 
       if (color && EVENT_BY_COLOR[color]) {
@@ -382,7 +382,7 @@ export default function Game1() {
 
         {/* ★ GameHUD に money (総額) を渡す */}
         <GameHUD
-          money={money} 
+          money={money}
           remaining={TOTAL_TILES - step}
           className='w-full absolute top-[3%] left-[3%]'
         />
@@ -400,7 +400,7 @@ export default function Game1() {
 
         <DiceButton
           onClick={handleRollClick}
-          disabled={isMoving || !!activeEventColor || !authUser} 
+          disabled={isMoving || !!activeEventColor || !authUser}
           className='absolute right-[3%] bottom-[3%] z-10'
         />
 
@@ -459,7 +459,7 @@ export default function Game1() {
             currentMoney={money}
             onUpdateMoney={setMoney} // Game1のsetMoney(総額更新)を渡す
             // ▲▲▲ ここまで追加 ▲▲▲
-            
+
             eventMessage={currentEventDetail ?? ''}
             onClose={() => {
               console.log(
@@ -472,7 +472,7 @@ export default function Game1() {
               setCurrentEventDetail(null)
               useGameStore.getState().clearMoneyChange();
               useGameStore.getState().clearNeighborReq();
-              
+
               if (goalAwaitingEventClose && !goalPushedRef.current) {
                 goalPushedRef.current = true
                 setGoalAwaitingEventClose(false)
@@ -480,28 +480,6 @@ export default function Game1() {
               }
             }}
           />
-        )}
-
-        {/* 分岐マスの仮UI */}
-        {branchChoice && (
-          <div className='absolute inset-0 z-[200] flex items-center justify-center bg-black/40 text-white'>
-            <div className='bg-brown-default border-2 border-white p-4 rounded-md text-center'>
-              <div className='font-bold mb-2'>
-                分岐マス {branchChoice.tileID}！どっちに進む？
-              </div>
-              <div className='flex flex-col gap-2'>
-                {branchChoice.options.map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => handleChooseBranch(opt)}
-                    className='px-4 py-2 rounded bg-blue-default text-white font-bold'
-                  >
-                    タイル {opt} に進む
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
         )}
 
         {/* ★ 未ログイン時のローディング/エラー表示 */}
