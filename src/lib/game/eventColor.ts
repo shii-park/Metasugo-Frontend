@@ -2,14 +2,15 @@
 import type { EventType } from '@/app/api/game/type'
 
 const EVENT_COLOR: Record<EventType, string> = {
-  money_plus:  'bg-blue-default',   // お金＋
-  money_minus: 'bg-red-default',    // お金−
+  profit:  'bg-blue-default',   // お金＋
+  loss: 'bg-red-default',    // お金−
   quiz:        'bg-yellow-default', // クイズ
   branch:      'bg-gray-light',  // 分岐
-  global:      'bg-pink-default',     // 全体効果
+  overall:      'bg-purple-default',     // 全体効果
   neighbor:    'bg-green-default',       // 隣接効果
-  gamble:      'bg-purple-default',   // ギャンブル
-  blank:       'bg-gray-800',       // 何もしない
+  gamble:      'bg-pink-default',   // ギャンブル
+  normal:       'bg-gray-800',       // 何もしない
+  goal:  'bg-brown-default/90'
 }
 
 export const colorClassOfEvent = (t?: EventType) =>

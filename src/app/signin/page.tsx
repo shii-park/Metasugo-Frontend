@@ -16,8 +16,13 @@ export default function SignIn() {
     setError("");
 
     try {
-      await login(email, password);
+      const { user, token } = await login(email, password);
+      // トークンとユーザー情報を保存
+      localStorage.setItem("user", JSON.stringify({ uid: user.uid, email: user.email }));
+      localStorage.setItem("token", token);
+
       router.push("/"); // ログイン後に遷移
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const message =
         err.code === "auth/invalid-credential" ||
@@ -37,6 +42,7 @@ export default function SignIn() {
 
       <div className="fixed inset-0 flex h-[100dvh] items-center justify-center bg-black overflow-hidden">
         <div className="relative w-full h-full max-w-[177.78vh] max-h-[56.25vw] aspect-video bg-[#E3DECF] py-2 px-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.svg"
             alt="ロゴ"
@@ -86,6 +92,7 @@ export default function SignIn() {
             </form>
 
             <div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/dice.png"
                 alt="サイコロ"

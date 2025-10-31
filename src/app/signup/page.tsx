@@ -6,34 +6,26 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function SignUp() {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState(""); 
+  const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(""); 
-
-    if (password !== confirmPassword) {
-      setErrorMessage("パスワードが一致しません。");
-      return;
-    }
+    setErrorMessage("");
 
     try {
-      console.log("サインアップ開始");
-      const userData = await signup(email, password);
-      console.log("サインアップ成功:", userData);
+      const { user, token } = await signup(username, email, password);
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ uid: user.uid, username: username, email: user.email })
+      );
+      localStorage.setItem("token", token);
 
-      localStorage.setItem("user", JSON.stringify(userData));
-
-      console.log("ホーム画面へ遷移します");
       router.push("/"); // 登録後に遷移
     } catch (error: any) {
-      console.error("サインアップエラー:", error);
-
-      // Firebaseのエラーコードに応じたメッセージを表示
       if (error.code === "auth/email-already-in-use") {
         setErrorMessage("このメールアドレスは既に登録されています。");
       } else if (error.code === "auth/invalid-email") {
@@ -48,10 +40,12 @@ export default function SignUp() {
 
   return (
     <div>
+      {/* 縦向き防止 */}
       <div className="portrait:fixed portrait:inset-0 portrait:bg-[#5B7BA6] portrait:text-white portrait:text-2xl portrait:flex portrait:items-center portrait:justify-center portrait:z-50 portrait:overflow-hidden portrait:touch-none">
         画面を横向きにしてください
       </div>
 
+      {/* メインコンテンツ */}
       <div className="fixed inset-0 flex h-[100dvh] items-center justify-center bg-black overflow-hidden">
         <div className="relative w-full h-full max-w-[177.78vh] max-h-[56.25vw] aspect-video bg-[#E3DECF] py-2 px-4">
           <img src="/logo.svg" alt="ロゴ" className="absolute top-3 left-10" />
@@ -62,12 +56,23 @@ export default function SignUp() {
                 新規登録
               </div>
 
-              {/* エラーメッセージ*/}
+              {/* エラーメッセージ */}
               {errorMessage && (
                 <div className="text-red-600 text-center text-sm font-medium">
                   {errorMessage}
                 </div>
               )}
+
+              <div className="flex items-center justify-center py-2 px-4 w-full">
+                <input
+                  type="text"
+                  placeholder="ユーザーネーム"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  className="border border-[#5B7BA6] bg-white rounded-lg text-[#5B7BA6] text-sm px-2 py-1 w-2/3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
 
               <div className="flex items-center justify-center py-2 px-4 w-full">
                 <input
@@ -79,6 +84,7 @@ export default function SignUp() {
                   className="border border-[#5B7BA6] bg-white rounded-lg text-[#5B7BA6] text-sm px-2 py-1 w-2/3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
+
               <div className="flex items-center justify-center py-2 px-4 w-full">
                 <input
                   type="password"
@@ -89,25 +95,21 @@ export default function SignUp() {
                   className="border border-[#5B7BA6] bg-white rounded-lg text-[#5B7BA6] text-sm px-2 py-1 w-2/3 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
-              <div className="flex items-center justify-center py-2 px-4 w-full">
-                <input
-                  type="password"
-                  placeholder="パスワード（確認）"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="border border-[#5B7BA6] bg-white rounded-lg text-[#5B7BA6] text-sm px-2 py-1 w-2/3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-              </div>
 
               <div className="flex justify-center items-center mt-6 text-2xl">
-                <button type="submit" className="rounded-lg bg-[#5B7BA6] font-bold text-white px-12 py-1">
+                <button
+                  type="submit"
+                  className="rounded-lg bg-[#5B7BA6] font-bold text-white px-12 py-1"
+                >
                   新規登録
                 </button>
               </div>
 
               <div className="flex justify-center items-center mt-4 text-2xl">
-                <Link href="/signin" className="rounded-lg font-bold text-[#5B7BA6] px-12 py-1">
+                <Link
+                  href="/signin"
+                  className="rounded-lg font-bold text-[#5B7BA6] px-12 py-1"
+                >
                   キャンセル
                 </Link>
               </div>
