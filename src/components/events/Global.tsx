@@ -1,12 +1,15 @@
 'use client'
 import { useState } from 'react';
 
-const MESSAGES = "盤面にいる全員のお金が\n3000円減った";
+// const MESSAGES = "盤面にいる全員のお金が\n3000円減った";
 
 type Props = {
+  eventMessage: string;
   onClose: () => void;
 }
-export default function Neighbor({ onClose}: Props) {
+export default function Global( props: Props) {
+  const { eventMessage, onClose} = props;
+
   const [showContent, setShowContent]=useState(false);
   const handleAdvance = () =>{
     if (showContent){
@@ -17,7 +20,7 @@ export default function Neighbor({ onClose}: Props) {
   };
 
   const isTitleOnly = !showContent;
-  const contentLines = MESSAGES.split('\n');
+  const contentLines = eventMessage.split('\n');
 
   return (
     <div className="absolute z-50 inset-0 cursor-pointer" onClick={handleAdvance}>

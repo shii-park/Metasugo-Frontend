@@ -6,9 +6,9 @@ const EVENT_COLOR: Record<EventType, string> = {
   loss: 'bg-red-default',    // お金−
   quiz:        'bg-yellow-default', // クイズ
   branch:      'bg-gray-light',  // 分岐
-  overall:      'bg-purple-default',     // 全体効果
+  overall:      'bg-pink-default',     // 全体効果
   neighbor:    'bg-green-default',       // 隣接効果
-  gamble:      'bg-pink-default',   // ギャンブル
+  gamble:      'bg-purple-default',   // ギャンブル
   normal:       'bg-gray-800',       // 何もしない
   goal:  'bg-brown-default/90'
 }
