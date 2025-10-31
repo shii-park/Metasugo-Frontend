@@ -141,6 +141,7 @@ export default function Branch({ onClose }: BranchProps) {
   } else {
    stopCamera();
   }
+ // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [isCameraActive]);
 
  const copy = PAGE_COPY[currentPage] ?? {
@@ -166,11 +167,11 @@ export default function Branch({ onClose }: BranchProps) {
  };
 
   // スキャナーを開く（QRコードボタンの onClick）
- const handleOpenScanner = () => {
-  if (submitting || handledRef.current) return;
-    handledRef.current = true;
-  setIsCameraActive(true);
- }
+//  const handleOpenScanner = () => {
+//   if (submitting || handledRef.current) return;
+//     handledRef.current = true;
+//   setIsCameraActive(true);
+//  }
 
  const go = (choice: Choice) => {
   if (choice === 'b') {
@@ -210,6 +211,7 @@ export default function Branch({ onClose }: BranchProps) {
                   aria-label="A で次ページへ進む"
                   disabled={submitting}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/QR_example.svg"
                     alt="QRコード"

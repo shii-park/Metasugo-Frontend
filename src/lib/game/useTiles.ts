@@ -1,13 +1,23 @@
 // src/lib/game/useTiles.ts
 'use client'
 
+import { auth } from '@/firebase'
+import { getIdToken } from 'firebase/auth'
 import { useEffect, useMemo, useState } from 'react'
 
-// ★ Firebase Authから必要なモジュールをインポート
-import { getIdToken } from 'firebase/auth'
-import { auth } from '@/firebase' // firebase.ts から auth インスタンスをインポート
+/** タイルの種類（見た目/分類） */
+export type TileKind =
+  | 'profit'
+  | 'loss'
+  | 'quiz'
+  | 'branch'
+  | 'overall'
+  | 'neighbor'
+  | 'require'
+  | 'gamble'
+  | 'goal'
 
-/** タイル効果の型定義 */
+/** タイル効果の型定義（ロジック寄り） */
 export type TileEffect =
   | { type: 'no_effect' }
   | { type: 'profit'; amount: number }
@@ -18,12 +28,27 @@ export type TileEffect =
   | { type: 'neighbor' }
   | { type: 'require' }
   | { type: 'gamble' }
-  // バックエンドに将来追加される可能性も考慮して fallback
   | Record<string, unknown>
+
+/** ランタイムガード：APIから来た文字列を TileKind に正規化 */
+const TILE_KINDS = [
+  'profit',
+  'loss',
+  'quiz',
+  'branch',
+  'overall',
+  'neighbor',
+  'require',
+  'gamble',
+  'goal',
+] as const
+
+const isTileKind = (v: unknown): v is TileKind =>
+  typeof v === 'string' && (TILE_KINDS as readonly string[]).includes(v)
 
 export type Tile = {
   id: number
-  kind: string
+  kind: TileKind        // ← string から厳密型へ
   detail: string
   effect: TileEffect
   prev_ids: number[]
@@ -37,7 +62,7 @@ export type UseTilesResult = {
   error: string | null
 }
 
-// ★ 修正: デフォルトのsrcを '/tiles' (APIエンドポイント) に変更
+/** 認証付きでタイル一覧を取得するフック */
 export function useTiles(src: string = '/tiles'): UseTilesResult {
   const [tiles, setTiles] = useState<Tile[] | null>(null)
   const [loading, setLoading] = useState(true)
@@ -46,42 +71,28 @@ export function useTiles(src: string = '/tiles'): UseTilesResult {
   useEffect(() => {
     let cancelled = false
 
-    // ★ 修正: 認証トークンを取得してfetchするロジック
     const fetchTiles = async () => {
       setLoading(true)
       setError(null)
 
       try {
-        // 1. 現在のログインユーザーを取得
         const user = auth.currentUser
-        if (!user) {
-          throw new Error('Not logged in') // ログインしていない場合はエラー
-        }
+        if (!user) throw new Error('Not logged in')
 
-        // 2. 認証トークンを取得 (shimの定義 'getIdToken(user)' に合わせる)
         const token = await getIdToken(user)
 
-        // 3. 認証ヘッダーを付けてAPIを叩く
         const res = await fetch(src, {
           cache: 'no-store',
-          headers: {
-            'Authorization': `Bearer ${token}`, // ★ 認証ヘッダーを追加
-          },
+          headers: { Authorization: `Bearer ${token}` },
         })
-
-        if (!res.ok) {
-          throw new Error(`Failed to fetch tiles: HTTP ${res.status}`)
-        }
+        if (!res.ok) throw new Error(`Failed to fetch tiles: HTTP ${res.status}`)
 
         const data = await res.json()
-        if (!Array.isArray(data)) {
-          throw new Error('Invalid tiles format (not array)')
-        }
+        if (!Array.isArray(data)) throw new Error('Invalid tiles format (not array)')
 
-        // (以降のパース処理は変更なし)
         const parsed: Tile[] = data.map((t) => ({
           id: t.id,
-          kind: t.kind,
+          kind: isTileKind(t.kind) ? t.kind : 'overall', // ← 不正値はフォールバック
           detail: t.detail,
           effect: t.effect ?? { type: 'no_effect' },
           prev_ids: t.prev_ids ?? [],
@@ -90,20 +101,18 @@ export function useTiles(src: string = '/tiles'): UseTilesResult {
 
         if (!cancelled) setTiles(parsed)
       } catch (e) {
-        console.error('[useTiles] Error:', e) // ★ エラーログを強化
-        if (!cancelled)
-          setError(e instanceof Error ? e.message : 'Failed to load tiles')
+        console.error('[useTiles] Error:', e)
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load tiles')
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
 
-    fetchTiles() // ★ 修正した非同期関数を実行
-
+    fetchTiles()
     return () => {
       cancelled = true
     }
-  }, [src]) // srcが変わった時だけ再実行
+  }, [src])
 
   const byId = useMemo(() => {
     const m = new Map<number, Tile>()

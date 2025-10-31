@@ -25,7 +25,7 @@ export default function Ranking() {
       console.log('🚪 未ログインのため /signin にリダイレクト')
       router.push('/signin')
     }
-  }, [user.uid, loading, router, user])
+  }, [loading, router, user])
 
   // --- ランキング取得 ---
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function Ranking() {
     }
 
     fetchRanking()
-  }, [user, user.uid])
+  }, [user])
 
   if (loading) {
     return (

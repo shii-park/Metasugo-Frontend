@@ -158,6 +158,7 @@ export default function Game1() {
       console.log('[Game1] トークン取得して connectGameSocket() 呼びます')
 
       // authUserからIDトークンを取得 (非同期)
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       authUser
       getIdToken(authUser)
         .then((token: string) => {
