@@ -110,6 +110,8 @@ export default function Game1() {
   >(null)
 
   const [activeEventColor, setActiveEventColor] = useState<string | null>(null)
+  const [currentEventDetail, setCurrentEventDetail]=useState<string |null>(null)
+
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
@@ -342,17 +344,38 @@ export default function Game1() {
     if (pos > 0 && pos <= TOTAL_TILES) {
       const isGoal = pos === TOTAL_TILES
       const GOAL_EVENT_TYPE: EventType = 'branch' // 仮のイベント色
+
+      const currentTile = tileById.get(pos);
+      const tileDetail = currentTile?.detail ?? '';
+
       const tileEventType: EventType | undefined = isGoal
         ? GOAL_EVENT_TYPE
         : kindToEventType(tileById.get(pos)?.kind)
 
       const color = colorClassOfEvent(tileEventType)
+      
       console.log('[Game1] tileEventType=', tileEventType, 'color=', color)
 
       if (color && EVENT_BY_COLOR[color]) {
         setActiveEventColor(color)
+
+        if (tileEventType === 'overall' || tileEventType === 'neighbor'){
+          console.log("[DUBUG] Setting EventDetail:", tileDetail);
+          setCurrentEventDetail(tileDetail);
+        }else{
+          // console.log("[DEBUG] Clearing EventDetail.");
+        }
+
+        // if (tileEventType === 'neighbor' || tileEventType === 'normal') {
+        //   setCurrentEventDetail(tileDetail);
+        // } else {
+        //   setCurrentEventDetail(null);
+        // }
+
         if (isGoal) setGoalAwaitingEventClose(true)
-      }
+      } else {
+    setCurrentEventDetail(null);
+  }
     }
   }
 
@@ -552,6 +575,7 @@ export default function Game1() {
         {/* ゴール等のイベントモーダル */}
         {EventComp && (
           <EventComp
+            eventMessage={currentEventDetail ?? ''}
             onClose={() => {
               console.log(
                 '[Game1] EventComp onClose (activeEventColor=',
@@ -559,6 +583,10 @@ export default function Game1() {
                 ')',
               )
               setActiveEventColor(null)
+              setCurrentEventDetail(null)
+              useGameStore.getState().clearMoneyChange();
+              useGameStore.getState().clearNeighborReq();
+              
               if (goalAwaitingEventClose && !goalPushedRef.current) {
                 goalPushedRef.current = true
                 setGoalAwaitingEventClose(false)

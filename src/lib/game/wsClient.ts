@@ -113,6 +113,16 @@ export type PlayerStatusChangedMessage = {
   payload: PlayerStatusChangedPayload
 }
 
+/** NEIGHBOR_REQUIRED */
+export type NeighborRequiredPayload = {
+  tileID: number;
+  message: string;
+};
+export type NeighborRequiredMessage = {
+  type: "NEIGHBOR_REQUIRED";
+  payload: NeighborRequiredPayload;
+};
+
 /** ERROR */
 export type ErrorPayload = {
   message: string
@@ -137,6 +147,7 @@ export type ServerMessage =
   | GambleResultMessage
   | PlayerFinishedMessage
   | PlayerStatusChangedMessage
+  | NeighborRequiredMessage
   | ErrorMessage
   | { type: 'PONG' } // ハートビート応答
   | { type: string; [k: string]: unknown } // 将来拡張用
@@ -193,8 +204,10 @@ export type GameSocketHandlers = {
     choice: 'High' | 'Low',
     won: boolean,
     amount: number,
-    newMoney: number,
-  ) => void
+    newMoney: number
+  ) => void;
+
+  onNeighborRequired?: (tileID: number, message: string) => void;
   onPlayerFinished?: (userID: string, money: number) => void
   onPlayerStatusChanged?: (userID: string, status: string, value: boolean | string | number | null) => void
   onErrorMessage?: (message: string) => void
