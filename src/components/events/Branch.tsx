@@ -9,9 +9,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 type Choice = 'a' | 'b'
 type BranchProps = {
   onClose?: () => void
-  options?: [number, number] | null  // ← Game1 から渡す
+  /** Game1 から渡される分岐タイル [A,B]。未指定なら WS 送信はスキップ */
+  options?: [number, number] | null
 }
-
 
 const PAGE_COPY: Record<number, { title: string; message: string; ans: string[] }> = {
   1: {
@@ -35,64 +35,39 @@ const PAGE_COPY: Record<number, { title: string; message: string; ans: string[] 
 
 function getCurrentPageFromPath(pathname: string): number {
   const m = pathname.match(/\/game\/(\d+)\/[ab](?:\/)?$/)
-  if (m && m[1]) return Number(m[1])
+  if (m?.[1]) return Number(m[1])
   const path = pathname.split('?')[0]!.split('#')[0]!
   const m2 = path.match(/\/game\/(\d+)\/[ab](?:\/)?$/)
-  if (m2 && m2[1]) return Number(m2[1])
+  if (m2?.[1]) return Number(m2[1])
   return 1
 }
 
-export default function Branch({ onClose }: BranchProps) {
+export default function Branch({ onClose, options }: BranchProps) {
   const router = useRouter()
   const pathname = usePathname()
 
   const setRouting = useGameStore((s) => s.setRouting)
   const incrementBranch = useGameStore((s) => s.incrementBranch)
 
-  const currentPage = useMemo<number>(() => getCurrentPageFromPath(pathname), [pathname])
-  const nextPage = useMemo<number>(() => currentPage + 1, [currentPage])
+  const currentPage = useMemo(() => getCurrentPageFromPath(pathname), [pathname])
+  const nextPage = currentPage + 1
 
   const [showContent, setShowContent] = useState(false)
   const [finalChoice, setFinalChoice] = useState<Choice | null>(null)
   const [resultMessage, setResultMessage] = useState<string | null>(null)
   const [isCameraActive, setIsCameraActive] = useState(false)
-  const [branchOptions, setBranchOptions] = useState<[number, number] | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const handledRef = useRef(false)
   const [submitting, setSubmitting] = useState(false)
-  const wsRef = useRef<WebSocket | null>(null)
-
-  // ---- WebSocket接続 ----
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080/ws')
-    wsRef.current = ws
-
-    ws.onopen = () => console.log('✅ WebSocket connected')
-
-    ws.onmessage = (event) => {
-      try {
-        const msg: BranchChoiceMessage = JSON.parse(event.data)
-        if (msg.type === 'BRANCH_CHOICE_REQUIRED') {
-          setBranchOptions(msg.payload.options)
-        }
-      } catch (err) {
-        console.error('WebSocketメッセージ解析失敗:', err)
-      }
-    }
-
-    ws.onerror = (err) => console.error('❌ WebSocket error:', err)
-    ws.onclose = () => console.log('🔌 WebSocket closed')
-
-    return () => ws.close()
-  }, [])
 
   // ---- カメラ停止 ----
   const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      ;(videoRef.current.srcObject as MediaStream).getTracks().forEach((t) => t.stop())
-    }
+    const v = videoRef.current
+    const stream = v?.srcObject as MediaStream | null
+    stream?.getTracks().forEach((t) => t.stop())
+    if (v) v.srcObject = null
     setIsCameraActive(false)
   }
 
@@ -100,32 +75,31 @@ export default function Branch({ onClose }: BranchProps) {
   const handleCodeDetection = (data: string) => {
     stopCamera()
 
-    const correctAnswers = PAGE_COPY[currentPage]?.ans
-    const isCorrect =
-      correctAnswers?.some((ans) => ans.toLowerCase() === data.toLowerCase()) ?? false
-    const finalChoice: Choice = isCorrect ? 'a' : 'b'
+    const correct = PAGE_COPY[currentPage]?.ans ?? []
+    const isCorrect = correct.some((ans) => ans.toLowerCase() === data.toLowerCase())
+    const choice: Choice = isCorrect ? 'a' : 'b'
 
-    const finalMessage = isCorrect
-      ? `QRコード「${data}」を読み取りました。正解です！`
-      : `QRコード「${data}」を読み取りました。不正解です。`
-
-    setFinalChoice(finalChoice)
-    setResultMessage(finalMessage)
+    setFinalChoice(choice)
+    setResultMessage(
+      isCorrect
+        ? `QRコード「${data}」を読み取りました。正解です！`
+        : `QRコード「${data}」を読み取りました。不正解です。`,
+    )
     setShowContent(false)
     handledRef.current = true
     setSubmitting(false)
 
-    if (branchOptions && wsRef.current?.readyState === WebSocket.OPEN) {
-      const selectedTile = finalChoice === 'a' ? branchOptions[0] : branchOptions[1]
-      wsRef.current.send(
-        JSON.stringify({ type: 'SUBMIT_CHOICE', payload: { selection: selectedTile } })
-      )
+    // 既存の WS 接続に分岐結果を送信（options があれば）
+    if (options) {
+      const selectedTile = choice === 'a' ? options[0] : options[1]
+      getActiveSocket()?.sendSubmitChoice(selectedTile)
     }
 
+    // 2秒後に遷移
     setTimeout(() => {
       setRouting(true)
       onClose?.()
-      router.push(`/game/${nextPage}/${finalChoice}`)
+      router.push(`/game/${nextPage}/${choice}`)
     }, 2000)
   }
 
@@ -160,22 +134,27 @@ export default function Branch({ onClose }: BranchProps) {
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: 'environment' } })
       .then((stream) => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream
-          videoRef.current.play()
-          videoRef.current.onloadedmetadata = () => requestAnimationFrame(scanQR)
-        }
+        const v = videoRef.current
+        if (!v) return
+        v.srcObject = stream
+        v.play()
+        v.onloadedmetadata = () => requestAnimationFrame(scanQR)
       })
       .catch((err) => {
         console.error('カメラアクセス失敗:', err)
         alert('カメラにアクセスできませんでした。権限を確認してください。')
         setIsCameraActive(false)
       })
+
+    // アンマウント/停止時は必ずクリーンアップ
+    return () => stopCamera()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCameraActive])
 
   const copy = PAGE_COPY[currentPage] ?? {
     title: `【条件分岐マス：${currentPage}ページ目】`,
     message: 'AかBを選んで次のページへ進みます。',
+    ans: [],
   }
 
   const handleAdvance = () => {
@@ -192,10 +171,8 @@ export default function Branch({ onClose }: BranchProps) {
       setShowContent(false)
       incrementBranch()
 
-      if (branchOptions && wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(
-          JSON.stringify({ type: 'SUBMIT_CHOICE', payload: { selection: branchOptions[1] } })
-        )
+      if (options) {
+        getActiveSocket()?.sendSubmitChoice(options[1])
       }
 
       setTimeout(() => {
@@ -204,7 +181,7 @@ export default function Branch({ onClose }: BranchProps) {
         router.push(`/game/${nextPage}/b`)
       }, 1000)
     } else {
-      setIsCameraActive(true)
+      setIsCameraActive(true) // ユーザー操作でカメラ起動
     }
   }
 
@@ -235,6 +212,7 @@ export default function Branch({ onClose }: BranchProps) {
                 onClick={() => go('a')}
                 disabled={submitting}
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/QR_example.svg" alt="QRコード" className="pr-3" />
                 QRコードを読み取る
               </button>
