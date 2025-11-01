@@ -61,7 +61,15 @@ export default function Game2b() {
   const [currentEventDetail, setCurrentEventDetail] = useState<string | null>(null)
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
 
-  const [money, setMoney] = useState<number>(1000000)
+  const money = useGameStore((state) => state.money);
+
+  // const setMoney = useGameStore((state) => state.setMoney);
+
+  // const { money, setMoney, setFinalMoney } = useGameStore((state) => ({
+  //   money: state.money,
+  //   setMoney: state.setMoney,
+  //   setFinalMoney: state.setFinalMoney,
+  // }))
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
   const [, setExpectedFinalStep] = useState<number | null>(null)
@@ -97,14 +105,13 @@ export default function Game2b() {
             },
             onMoneyChanged: (userID: string, newMoney: number) => {
               if (!authUser || userID !== authUser.uid) return
-              setMoney((prev) => {
-                const delta = newMoney - prev
-                if (delta !== 0) useGameStore.getState().setMoneyChange({ delta })
-                return newMoney
-              })
+              const prevMoney = useGameStore.getState().money;
+              const delta = newMoney - prevMoney;
+              if (delta !== 0) useGameStore.getState().setMoneyChange({ delta });
+              useGameStore.getState().setMoney(newMoney);
             },
             onGambleResult: (_u: string, _d: number, _c: 'High' | 'Low', _w: boolean, _a: number, newMoney: number) => {
-              setMoney(newMoney)
+              useGameStore.getState().setMoney(newMoney);
             },
             onPlayerMoved: (userID: string, newPosition: number) => {
               if (!authUser || userID !== authUser.uid) return
@@ -136,17 +143,20 @@ export default function Game2b() {
     if (!tile) return
     const ef = tile.effect as { type?: string; amount?: number } | undefined
     if (!ef || !ef.type) return
+    
+    const currentMoney = useGameStore.getState().money;
+
     if (ef.type === 'profit') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt) {
         useGameStore.getState().setMoneyChange({ delta: amt })
-        setMoney((p) => p + amt)
+        useGameStore.getState().setMoney(currentMoney + amt);
       }
     } else if (ef.type === 'loss') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt) {
         useGameStore.getState().setMoneyChange({ delta: -amt })
-        setMoney((p) => p - amt)
+        useGameStore.getState().setMoney(currentMoney - amt)
       }
     }
   }
@@ -274,8 +284,8 @@ export default function Game2b() {
 
         {EventComp && (
           <EventComp
-            currentMoney={money}
-            onUpdateMoney={setMoney}
+            // currentMoney={money}
+            // onUpdateMoney={setMoney}
             eventMessage={currentEventDetail ?? ''}
             onClose={() => {
               setActiveEventColor(null)

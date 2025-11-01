@@ -38,6 +38,8 @@ export type GameState = {
   clearMoneyChange: () => void
 }
 
+const INITIAL_MONEY = 1000000;
+
 export const useGameStore = create<GameState>((set) => ({
   // --- 基本 ---
   branchCount: 0,
@@ -47,7 +49,7 @@ export const useGameStore = create<GameState>((set) => ({
   setRouting: (v) => set({ isRouting: v }),
 
   // --- 所持金 ---
-  money: 0,                       // ← 初期値。必要なら 1000000 などに変更可
+  money: INITIAL_MONEY,                       // ← 初期値。必要なら 1000000 などに変更可
   setMoney: (v) => set({ money: v }),
   finalMoney: null,
   setFinalMoney: (v) => set({ finalMoney: v }),

@@ -108,7 +108,10 @@ export default function Game1() {
 
   // ★ Gamble (MoneyPlus) に渡すための所持金 State
   // (※) 100万円の初期値はここ (親ページ) で設定
-  const [money, setMoney] = useState<number>(1000000)
+  // const [money, setMoney] = useState<number>(1000000)
+
+  const money = useGameStore((state) => state.money)
+  // const setMoney = useGameStore((state) => state.setMoney)
 
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
@@ -175,14 +178,16 @@ export default function Game1() {
             onMoneyChanged: (userID: string, newMoney: number) => {
               if (!authUser || userID !== authUser.uid) return
               console.log('[WS] MONEY_CHANGED for me:', newMoney)
-              setMoney((prev) => {
+              // setMoney((prev) => {
+                const prev = useGameStore.getState().money
                 const delta = newMoney - prev
                 if (delta !== 0) {
                   // MoneyMinus 用に差額をストアに保存
                   useGameStore.getState().setMoneyChange({ delta })
                 }
-                return newMoney // ★ 総額を更新
-              })
+                // return newMoney // ★ 総額を更新
+                useGameStore.getState().setMoney(newMoney)
+              // })
             },
 
             // ★ 変更点: Gambleの結果も setMoney で総額を更新
@@ -208,7 +213,8 @@ export default function Game1() {
               // onUpdateMoney(newMoney) が呼ばれ setMoney が更新される。
               // このWSイベントが二重で setMoney(newMoney) を呼ぶ可能性が
               // あるが、同じ値で更新するだけなので実害はない。
-              setMoney(newMoney)
+              // setMoney(newMoney)
+              useGameStore.getState().setMoney(newMoney)
             },
 
             onPlayerMoved: (userID: string, newPosition: number) => {
@@ -263,19 +269,23 @@ export default function Game1() {
     const ef = tile.effect as { type?: string; amount?: number } | undefined
     if (!ef || !ef.type) return
 
+    const currentMoney = useGameStore.getState().money
+
     // ★ 変更点: setMoney (総額更新) を使う
     if (ef.type === 'profit') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt !== 0) {
         useGameStore.getState().setMoneyChange({ delta: amt })
-        setMoney((prev) => prev + amt) // ★ 総額を更新
+        useGameStore.getState().setMoney(currentMoney + amt)
+        // setMoney((prev) => prev + amt) // ★ 総額を更新
         console.log('[Game1] PROFIT tile:', tileId, '+', amt)
       }
     } else if (ef.type === 'loss') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt !== 0) {
         useGameStore.getState().setMoneyChange({ delta: -amt })
-        setMoney((prev) => prev - amt) // ★ 総額を更新
+        // setMoney((prev) => prev - amt) // ★ 総額を更新
+        useGameStore.getState().setMoney( currentMoney - amt)
         console.log('[Game1] LOSS tile:', tileId, '-', amt)
       }
     }
@@ -543,8 +553,8 @@ export default function Game1() {
         {EventComp && (
           <EventComp
             // ▼▼▼ ここから2行が Gamble のために追加 ▼▼▼
-            currentMoney={money}
-            onUpdateMoney={setMoney} // Game1のsetMoney(総額更新)を渡す
+            // currentMoney={money}
+            // onUpdateMoney={setMoney} // Game1のsetMoney(総額更新)を渡す
             // ▲▲▲ ここまで追加 ▲▲▲
 
             eventMessage={currentEventDetail ?? ''}
