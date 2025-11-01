@@ -285,6 +285,18 @@ export default function Game2b() {
     setIsDiceOpen(false)
   }
 
+  useEffect(() => {
+    if (authUser && wsRef.current && !tilesLoading && step === 0) {
+      const timer = setTimeout(async () => {
+        await moveBy(1)
+        setTimeout(() => {
+          setIsMoving(false)
+        }, 100)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [authUser, wsRef.current, tilesLoading])
+
   return (
     <div className="relative w-full h-[100dvh] bg-brown-light grid place-items-center">
       <div className="relative aspect-[16/9] w-[min(100vw,calc(100dvh*16/9))] overflow-hidden">

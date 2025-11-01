@@ -330,6 +330,18 @@ export default function Game1() {
   const colorOf = (id: number) =>
     colorClassOfEvent(kindToEventType(tileById.get(id)?.kind))
 
+    useEffect(() => {
+      if (authUser && wsRef.current && !tilesLoading && step === 0) {
+        const timer = setTimeout(async () => {
+          await moveBy(1)
+          setTimeout(() => {
+            setIsMoving(false)
+          }, 100)
+        }, 500)
+        return () => clearTimeout(timer)
+      }
+    }, [authUser, wsRef.current, tilesLoading])
+
   // --- メインレンダー ---
   return (
     <div className='relative w-full h-[100dvh] bg-brown-light grid place-items-center'>
