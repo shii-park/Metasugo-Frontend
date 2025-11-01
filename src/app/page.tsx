@@ -112,7 +112,7 @@ export default function Home() {
               </div>
               <div className='font-bold bg-white text-l text-[#5B7BA6] flex flex-col items-center justify-center px-6 py-4 w-2/5 mx-auto'>
                 <p className='flex justify-between w-full'>
-                  <span>最高金額</span>
+                  <span>あなたの最高金額</span>
                   <span>
                     {scoreError ? '取得失敗' : bestScore !== null ? `${bestScore.toLocaleString()}円` : '読み込み中...'}
                   </span>
