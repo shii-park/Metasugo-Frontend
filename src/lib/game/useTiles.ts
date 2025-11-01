@@ -93,7 +93,7 @@ export type UseTilesResult = {
 }
 
 // デプロイ先のURLでやる
-export function useTiles(src: string = 'http://localhost:8080/tiles'): UseTilesResult {
+export function useTiles(src: string = `${process.env.NEXT_PUBLIC_BACKEND_API_ORIGIN}/tiles`): UseTilesResult {
   const { user, loading: authLoading } = useAuth()
   const [tiles, setTiles] = useState<Tile[] | null>(null)
   const [loading, setLoading] = useState(true)
