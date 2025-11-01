@@ -344,7 +344,8 @@ export default function Game4b() {
 
           <Tile col={1} row={1} colorClass={colorOf(87)} />
           <Tile col={3} row={1} colorClass={colorOf(88)} />
-          <Tile col={5} row={1} colorClass={colorOf(78)} />
+          <Tile col={5} row={1} colorClass={colorOf(89)} />
+          <Tile col={7} row={1} colorClass={colorOf(90)} />
           {/* 最後はゴール手前まで */}
         </div>
 
