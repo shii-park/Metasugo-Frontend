@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 /** タイルの種類（見た目/分類） */
 export type TileKind =
+  | 'normal'
   | 'profit'
   | 'loss'
   | 'quiz'
@@ -16,10 +17,6 @@ export type TileKind =
   | 'neighbor'
   | 'require'
   | 'goal'
-  | 'setStatus'
-  | 'childBonus'
-  | 'normal'
-  | 'conditional'
   | 'setStatus'
   | 'childBonus'
 
@@ -68,13 +65,11 @@ const TILE_KINDS = [
   'goal',
   'setStatus',
   'childBonus',
-  'conditional',
-  'setStatus',
-  'childBonus',
 ] as const
 
 const isTileKind = (v: unknown): v is TileKind =>
-  typeof v === 'string' && (TILE_KINDS as readonly string[]).includes(v)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  typeof v === 'string' && (TILE_KINDS as readonly string[]).includes(v as any)
 
 export type Tile = {
   id: number
@@ -92,8 +87,22 @@ export type UseTilesResult = {
   error: string | null
 }
 
-// デプロイ先のURLでやる
-export function useTiles(src: string = `${process.env.NEXT_PUBLIC_BACKEND_API_ORIGIN}/tiles`): UseTilesResult {
+/** ベースURL末尾のスラッシュを除去してから /tiles を付与する */
+const ORIGIN = (process.env.NEXT_PUBLIC_BACKEND_API_ORIGIN ?? '').replace(/\/+$/, '')
+const DEFAULT_TILES_URL = `${ORIGIN}/tiles`
+
+/**
+ * タイル一覧取得フック
+ * - デフォルトで {ORIGIN}/tiles を叩く
+ * - 呼び出し側が空文字やベースURLのみを渡しても /tiles を付けて安全にアクセス
+ */
+export function useTiles(src?: string): UseTilesResult {
+  const url = (() => {
+    if (!src || !src.trim()) return DEFAULT_TILES_URL
+    const trimmed = src.replace(/\/+$/, '')
+    return /\/tiles(\b|\/|$)/.test(trimmed) ? trimmed : `${trimmed}/tiles`
+  })()
+
   const { user, loading: authLoading } = useAuth()
   const [tiles, setTiles] = useState<Tile[] | null>(null)
   const [loading, setLoading] = useState(true)
@@ -115,7 +124,10 @@ export function useTiles(src: string = `${process.env.NEXT_PUBLIC_BACKEND_API_OR
       try {
         const token = await getIdToken(user)
 
-        const res = await fetch(src, {
+        // デバッグ用: 実際のアクセス先を確認
+        console.log('[useTiles] GET', url)
+
+        const res = await fetch(url, {
           cache: 'no-store',
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -146,7 +158,7 @@ export function useTiles(src: string = `${process.env.NEXT_PUBLIC_BACKEND_API_OR
     return () => {
       cancelled = true
     }
-  }, [authLoading, user, src])
+  }, [authLoading, user, url])
 
   const byId = useMemo(() => {
     const m = new Map<number, Tile>()

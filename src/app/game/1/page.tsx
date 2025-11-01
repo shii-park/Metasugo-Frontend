@@ -92,7 +92,7 @@ export default function Game1() {
   )
 
   const [step, setStep] = useState(0)
-  const [serverTileID, setServerTileID] = useState<number | null>(null)
+  const [, setServerTileID] = useState<number | null>(null)
   const [isDiceOpen, setIsDiceOpen] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
   const [lastDiceResult, setLastDiceResult] = useState<
@@ -113,7 +113,7 @@ export default function Game1() {
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
   const [, setExpectedFinalStep] = useState<number | null>(null)
-  const [branchChoice, setBranchChoice] = useState<{
+  const [, setBranchChoice] = useState<{
     tileID: number
     options: number[]
   } | null>(null)
