@@ -35,14 +35,14 @@ import {
 } from '@/lib/game/wsClient'
 
 // --- レイアウト（3b） ---
-const START_POS = { col: 1, row: 5 }
+const START_POS = { col: 7, row: 5 }
 const positions = [
   // 下段 L→R (4)
-  { col: 1, row: 5 }, { col: 3, row: 5 }, { col: 5, row: 5 }, { col: 7, row: 5 },
+  { col: 7, row: 5 }, { col: 5, row: 5 }, { col: 3, row: 5 }, { col: 1, row: 5 },
   // 中段 R→L (5)
-  { col: 9, row: 3 }, { col: 7, row: 3 }, { col: 5, row: 3 }, { col: 3, row: 3 }, { col: 1, row: 3 },
+  { col: 1, row: 3 }, { col: 3, row: 3 }, { col: 5, row: 3 }, { col: 7, row: 3 }, { col: 9, row: 3 },
   // 上段 L→R (5)
-  { col: 1, row: 1 }, { col: 3, row: 1 }, { col: 5, row: 1 }, { col: 7, row: 1 }, { col: 9, row: 1 },
+  { col: 9, row: 1 }, { col: 7, row: 1 }, { col: 5, row: 1 }, { col: 3, row: 1 }, { col: 1, row: 1 },
 ]
 const COLS = [12, 10.5, 9.5, 11.5, 9.5, 11.65, 9.5, 10.35, 12]
 const ROWS = [18, 8, 18, 12, 18]
