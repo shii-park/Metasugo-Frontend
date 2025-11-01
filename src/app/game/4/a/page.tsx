@@ -12,7 +12,7 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth'
 
-// 型/イベントマッピング
+// 型・イベント
 import type { EventType } from '@/app/api/game/type'
 import { EVENT_BY_COLOR } from '@/components/events'
 import Finish from '@/components/events/Finish'
@@ -30,7 +30,7 @@ import Tile from '@/components/game/Tile'
 import { colorClassOfEvent } from '@/lib/game/eventColor'
 import { kindToEventType } from '@/lib/game/kindMap'
 import { useGameStore } from '@/lib/game/store'
-import { useTiles } from '@/lib/game/useTiles'
+import { useTiles, type Tile as TileType } from '@/lib/game/useTiles'
 import {
   connectGameSocket,
   GameSocketConnection,
@@ -55,11 +55,44 @@ const positions = [
 ]
 const TOTAL_TILES = positions.length
 
-const COLS = [1.75, 12, 5.5, 10.125, 5.5, 5, 15.75] // %
-const ROWS = [12, 11, 18, 8, 18] // %
-const PAD_X = 7.2 // %
+const COLS = [1.75, 12, 5.5, 10.125, 5.5, 5, 15.75]
+const ROWS = [12, 11, 18, 8, 18]
+const PAD_X = 7.2
 const PAD_TOP = 16
 const PAD_BOTTOM = 7
+
+const TILE_IDS = [67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78] as const
+const tileIdAt = (pos: number) => TILE_IDS[pos - 1] // pos: 1..12
+
+/** effect.type を優先して EventType を判定（無い場合は kind からフォールバック） */
+function eventTypeOfTile(tile?: TileType): EventType | undefined {
+  if (!tile) return undefined
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const t = (tile.effect as any)?.type as string | undefined
+  switch (t) {
+    case 'profit':
+    case 'loss':
+    case 'quiz':
+    case 'branch':
+    case 'gamble':
+    case 'overall':
+    case 'neighbor':
+    case 'require':
+    case 'goal':
+    case 'conditional':
+    case 'setStatus':
+    case 'childBonus':
+      return t as EventType
+  }
+  return kindToEventType(tile.kind)
+}
+
+/** 盤面 index（1..12）から色クラスを返す。必ず pos→id を通す */
+const colorOfPos = (posIndex: number, tileById: Map<number, TileType>) => {
+  const id = tileIdAt(posIndex)
+  const ev = eventTypeOfTile(tileById.get(id))
+  return colorClassOfEvent(ev)
+}
 
 export default function Game4a() {
   const router = useRouter()
@@ -68,7 +101,7 @@ export default function Game4a() {
   // ===== 認証 =====
   const [authUser, setAuthUser] = useState<FirebaseUser | null>(null)
 
-  // ===== タイル取得（色付けは Game1 同様に useTiles -> kind -> EventType -> color）=====
+  // ===== タイルデータ =====
   const {
     byId: tileById,
     tiles,
@@ -81,23 +114,24 @@ export default function Game4a() {
     if (tiles) console.log('[Game4a] tiles len:', tiles.length)
   }, [tilesLoading, tilesError, tiles])
 
-  // ===== 進行/状態 =====
-  const [step, setStep] = useState(0) // 0=START_POS, 1..TOTAL_TILES=positions[index]
+  // ===== 進行 =====
+  const [step, setStep] = useState(0)
   const [, setServerTileID] = useState<number | null>(null)
   const [isDiceOpen, setIsDiceOpen] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
   const [lastDiceResult, setLastDiceResult] = useState<
     1 | 2 | 3 | 4 | 5 | 6 | null
   >(null)
+  const [showFinish, setShowFinish] = useState(false)
 
+  // ===== イベント =====
   const [activeEventColor, setActiveEventColor] = useState<string | null>(null)
   const [currentEventDetail, setCurrentEventDetail] = useState<string | null>(
     null,
   )
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
-  const [showFinish, setShowFinish] = useState(false)
 
-  // 所持金（Game1と同様）
+  // 所持金
   const [money, setMoney] = useState<number>(1000000)
 
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
@@ -120,7 +154,6 @@ export default function Game4a() {
         console.log('[Game4a] logged in:', user.uid)
         setAuthUser(user)
       } else {
-        console.log('[Game4a] logged out')
         setAuthUser(null)
         wsRef.current?.close()
         wsRef.current = null
@@ -129,7 +162,7 @@ export default function Game4a() {
     return () => un()
   }, [])
 
-  // ===== WS 接続（Game1と同構成）=====
+  // ===== WS 接続 =====
   useEffect(() => {
     if (authUser && !wsRef.current) {
       getIdToken(authUser)
@@ -159,14 +192,13 @@ export default function Game4a() {
               })
             },
             onGambleResult: (
-              userID: string,
+              _u: string,
               _d: number,
               _c: 'High' | 'Low',
-              _won: boolean,
-              _amount: number,
+              _w: boolean,
+              _amt: number,
               newMoney: number,
             ) => {
-              if (!authUser || userID !== authUser.uid) return
               setMoney(newMoney)
             },
             onPlayerMoved: (userID: string, newPosition: number) => {
@@ -199,31 +231,29 @@ export default function Game4a() {
     }
   }, [authUser])
 
-  // ===== タイル効果（即時反映：profit/loss）=====
-  function runTileEffect(tileId: number) {
+  // ===== タイル効果 =====
+  function runTileEffectByTileId(tileId: number) {
     const tile = tileById.get(tileId)
     if (!tile) return
     const ef = tile.effect as { type?: string; amount?: number } | undefined
-    if (!ef || !ef.type) return
+    if (!ef?.type) return
 
     if (ef.type === 'profit') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt) {
         useGameStore.getState().setMoneyChange({ delta: amt })
         setMoney((p) => p + amt)
-        console.log('[Game4a] PROFIT tile:', tileId, '+', amt)
       }
     } else if (ef.type === 'loss') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt) {
         useGameStore.getState().setMoneyChange({ delta: -amt })
         setMoney((p) => p - amt)
-        console.log('[Game4a] LOSS tile:', tileId, '-', amt)
       }
     }
   }
 
-  // ===== 前進（アニメ → 効果 → イベント or ゴール）=====
+  // ===== 前進 =====
   async function moveBy(stepsToMove: number) {
     if (isMoving || activeEventColor || showFinish) return
     if (step >= TOTAL_TILES) return
@@ -240,36 +270,33 @@ export default function Game4a() {
     setIsMoving(false)
     setExpectedFinalStep(pos)
 
-    // ゴール
     if (pos === TOTAL_TILES) {
       setShowFinish(true)
       return
     }
 
-    // 効果
-    if (pos > 0 && pos < TOTAL_TILES) runTileEffect(pos)
+    if (pos > 0 && pos <= TOTAL_TILES) {
+      const tileId = tileIdAt(pos)
+      runTileEffectByTileId(tileId)
 
-    // イベント（色）
-    if (pos > 0 && pos < TOTAL_TILES) {
-      const currentTile = tileById.get(pos)
-      const tileDetail = currentTile?.detail ?? ''
-      const tileEventType: EventType | undefined = kindToEventType(
-        currentTile?.kind,
-      )
+      const isGoal = pos === TOTAL_TILES
+      const currentTile = tileById.get(tileId)
+
+      // goal マスは 'goal' を優先
+      const tileEventType: EventType | undefined = isGoal ? 'goal' : eventTypeOfTile(currentTile)
       const color = colorClassOfEvent(tileEventType)
 
-      if (color && EVENT_BY_COLOR[color]) {
-        setActiveEventColor(color)
-        if (tileEventType === 'overall' || tileEventType === 'neighbor') {
-          setCurrentEventDetail(tileDetail)
-        }
-      } else {
-        setCurrentEventDetail(null)
-      }
+      setActiveEventColor(color ?? null)
+      setCurrentEventDetail(
+        tileEventType === 'overall' || tileEventType === 'neighbor'
+          ? (currentTile?.detail ?? '')
+          : null,
+      )
+      setGoalAwaitingEventClose(isGoal)
     }
   }
 
-  // ===== サイコロ（サーバー経由：WS）=====
+  // ===== サイコロ =====
   function handleRollClick() {
     if (isMoving || !!activeEventColor || !authUser || showFinish) return
     if (!wsRef.current) return
@@ -283,7 +310,6 @@ export default function Game4a() {
     setIsDiceOpen(false)
   }
 
-  // ===== マス色（Game1 と同じロジック）=====
   const colorOf = (id: number) =>
     colorClassOfEvent(kindToEventType(tileById.get(id)?.kind))
 
@@ -297,10 +323,9 @@ export default function Game4a() {
           className='object-cover z-0 pointer-events-none opacity-70'
           aria-hidden
           priority
-          sizes='100vw'
         />
 
-        {/* HUD / 設定 / ステータス */}
+        {/* HUD */}
         <GameHUD
           money={money}
           remaining={Math.max(TOTAL_TILES - step, 0)}
@@ -313,7 +338,7 @@ export default function Game4a() {
           <Status />
         </div>
 
-        {/* ゴール表示 */}
+        {/* ゴール */}
         <div className='absolute top-[10%] sm:top-[12%] right-[13%] rounded-md bg-brown-default/90 text-white border-2 border-white w-[20%] h-[20%] font-bold text-xl md:text-3xl flex items-center justify-center z-20'>
           ゴール
         </div>
@@ -331,7 +356,7 @@ export default function Game4a() {
           onConfirm={handleDiceConfirm}
         />
 
-        {/* タイル配置（useTiles の色反映）*/}
+        {/* タイル配置 */}
         <div
           className='absolute inset-0 grid grid-cols-7 grid-rows-5 px-[8%] pt-[8.5%] pb-[8%]'
           style={{
@@ -339,22 +364,22 @@ export default function Game4a() {
             gridTemplateRows: '17% 23.5% 17% 24% 17%',
           }}
         >
-          {/* 下段 1..4 */}
-          <Tile col={1} row={5} colorClass={colorOf(67)} />
-          <Tile col={3} row={5} colorClass={colorOf(68)} />
-          <Tile col={5} row={5} colorClass={colorOf(69)} />
-          <Tile col={7} row={5} colorClass={colorOf(70)} />
+          {/* 下段 */}
+          <Tile col={1} row={5} colorClass={colorOfPos(1, tileById)} />
+          <Tile col={3} row={5} colorClass={colorOfPos(2, tileById)} />
+          <Tile col={5} row={5} colorClass={colorOfPos(3, tileById)} />
+          <Tile col={7} row={5} colorClass={colorOfPos(4, tileById)} />
 
-          <Tile col={7} row={3} colorClass={colorOf(71)} />
-          <Tile col={5} row={3} colorClass={colorOf(72)} />
-          <Tile col={3} row={3} colorClass={colorOf(73)} />
-          <Tile col={1} row={3} colorClass={colorOf(74)} />
+          <Tile col={7} row={3} colorClass={colorOfPos(5, tileById)} />
+          <Tile col={5} row={3} colorClass={colorOfPos(6, tileById)} />
+          <Tile col={3} row={3} colorClass={colorOfPos(7, tileById)} />
+          <Tile col={1} row={3} colorClass={colorOfPos(8, tileById)} />
 
-          <Tile col={1} row={1} colorClass={colorOf(75)} />
-          <Tile col={3} row={1} colorClass={colorOf(76)} />
-          <Tile col={5} row={1} colorClass={colorOf(77)} />
-          {/* 12マス目はプレイヤーの着地でゴール扱いにするので色は不要でもOK（必要なら colorOf(12)）*/}
-          <Tile col={7} row={1} colorClass={colorOf(78)} />
+          <Tile col={1} row={1} colorClass={colorOfPos(9, tileById)} />
+          <Tile col={3} row={1} colorClass={colorOfPos(10, tileById)} />
+          <Tile col={5} row={1} colorClass={colorOfPos(11, tileById)} />
+          <Tile col={7} row={1} colorClass={colorOfPos(12, tileById)} />
+          {/* 最後はゴール手前まで */}
         </div>
 
         {/* プレイヤー */}
@@ -370,7 +395,6 @@ export default function Game4a() {
           imgSrc='/player1.png'
         />
 
-        {/* イベントモーダル（Game1互換：Money と eventMessage を受け渡し） */}
         {EventComp && (
           <EventComp
             currentMoney={money}
@@ -384,13 +408,11 @@ export default function Game4a() {
               if (goalAwaitingEventClose && !goalPushedRef.current) {
                 goalPushedRef.current = true
                 setGoalAwaitingEventClose(false)
-                // 4a は最終ページなので push は不要
               }
             }}
           />
         )}
 
-        {/* ゴール（Finish モーダル） */}
         {showFinish && (
           <Finish
             title='ゴール！'
@@ -411,7 +433,6 @@ export default function Game4a() {
           />
         )}
 
-        {/* 未ログイン時のオーバーレイ */}
         {!authUser && (
           <div className='absolute inset-0 z-[300] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
             <div className='text-white text-2xl font-bold drop-shadow-lg'>
