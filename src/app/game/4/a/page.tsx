@@ -344,12 +344,12 @@ export default function Game4a() {
           <Tile col={3} row={5} colorClass={colorOf(2)} />
           <Tile col={5} row={5} colorClass={colorOf(3)} />
           <Tile col={7} row={5} colorClass={colorOf(4)} />
-          {/* 中段 5..8 */}
+
           <Tile col={7} row={3} colorClass={colorOf(5)} />
           <Tile col={5} row={3} colorClass={colorOf(6)} />
           <Tile col={3} row={3} colorClass={colorOf(7)} />
           <Tile col={1} row={3} colorClass={colorOf(8)} />
-          {/* 上段 9..12（最後はゴールマス手前まで色付け）*/}
+
           <Tile col={1} row={1} colorClass={colorOf(9)} />
           <Tile col={3} row={1} colorClass={colorOf(10)} />
           <Tile col={5} row={1} colorClass={colorOf(11)} />

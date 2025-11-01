@@ -332,15 +332,15 @@ export default function Game4b() {
           }}
         >
           {/* 下段 */}
-          <Tile col={7} row={5} colorClass={colorOf(1)} />
-          <Tile col={5} row={5} colorClass={colorOf(2)} />
-          <Tile col={3} row={5} colorClass={colorOf(3)} />
-          <Tile col={1} row={5} colorClass={colorOf(4)} />
+          <Tile col={1} row={5} colorClass={colorOf(1)} />
+          <Tile col={3} row={5} colorClass={colorOf(2)} />
+          <Tile col={5} row={5} colorClass={colorOf(3)} />
+          <Tile col={7} row={5} colorClass={colorOf(4)} />
 
-          <Tile col={1} row={3} colorClass={colorOf(5)} />
-          <Tile col={3} row={3} colorClass={colorOf(6)} />
-          <Tile col={5} row={3} colorClass={colorOf(7)} />
-          <Tile col={7} row={3} colorClass={colorOf(8)} />
+          <Tile col={7} row={3} colorClass={colorOf(5)} />
+          <Tile col={5} row={3} colorClass={colorOf(6)} />
+          <Tile col={3} row={3} colorClass={colorOf(7)} />
+          <Tile col={1} row={3} colorClass={colorOf(8)} />
 
           <Tile col={1} row={1} colorClass={colorOf(9)} />
           <Tile col={3} row={1} colorClass={colorOf(10)} />

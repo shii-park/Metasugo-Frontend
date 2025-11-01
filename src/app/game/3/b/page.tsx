@@ -287,24 +287,22 @@ export default function Game3b() {
           }}
         >
           {/* 下段 1..4 */}
-          <Tile col={1} row={5} colorClass={colorOf(1)} />
-          <Tile col={3} row={5} colorClass={colorOf(2)} />
-          <Tile col={5} row={5} colorClass={colorOf(3)} />
-          <Tile col={7} row={5} colorClass={colorOf(4)} />
+          <Tile col={7} row={5} colorClass={colorOf(1)} />
+          <Tile col={5} row={5} colorClass={colorOf(2)} />
+          <Tile col={3} row={5} colorClass={colorOf(3)} />
+          <Tile col={1} row={5} colorClass={colorOf(4)} />
 
-          {/* 中段 5..9（R→L） */}
-          <Tile col={9} row={3} colorClass={colorOf(5)} />
-          <Tile col={7} row={3} colorClass={colorOf(6)} />
+          <Tile col={1} row={3} colorClass={colorOf(5)} />
+          <Tile col={3} row={3} colorClass={colorOf(6)} />
           <Tile col={5} row={3} colorClass={colorOf(7)} />
-          <Tile col={3} row={3} colorClass={colorOf(8)} />
-          <Tile col={1} row={3} colorClass={colorOf(9)} />
+          <Tile col={7} row={3} colorClass={colorOf(8)} />
+          <Tile col={9} row={3} colorClass={colorOf(9)} />
 
-          {/* 上段 10..14 */}
-          <Tile col={1} row={1} colorClass={colorOf(10)} />
-          <Tile col={3} row={1} colorClass={colorOf(11)} />
+          <Tile col={9} row={1} colorClass={colorOf(10)} />
+          <Tile col={7} row={1} colorClass={colorOf(11)} />
           <Tile col={5} row={1} colorClass={colorOf(12)} />
-          <Tile col={7} row={1} colorClass={colorOf(13)} />
-          <Tile col={9} row={1} colorClass={colorOf(14)} />
+          <Tile col={3} row={1} colorClass={colorOf(13)} />
+          <Tile col={1} row={1} colorClass={colorOf(14)} />
         </div>
 
         {/* プレイヤー */}

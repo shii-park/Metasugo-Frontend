@@ -470,7 +470,7 @@ export default function Game1() {
             className='w-full h-full'
           />
           <Tile
-            col={6}
+            col={5}
             row={3}
             colorClass={colorOf(6)}
             className='w-full h-full'
