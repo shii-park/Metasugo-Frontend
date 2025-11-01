@@ -98,7 +98,8 @@ export default function Game4a() {
   const [showFinish, setShowFinish] = useState(false)
 
   // 所持金（Game1と同様）
-  const [money, setMoney] = useState<number>(1000000)
+  // const [money, setMoney] = useState<number>(1000000)
+  const money = useGameStore((state) => state.money)
 
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
   const [, setExpectedFinalStep] = useState<number | null>(null)
@@ -151,12 +152,13 @@ export default function Game4a() {
             },
             onMoneyChanged: (userID: string, newMoney: number) => {
               if (!authUser || userID !== authUser.uid) return
-              setMoney((prev) => {
+              // setMoney((prev) => {
+              const prev = useGameStore.getState().money
                 const delta = newMoney - prev
                 if (delta !== 0)
                   useGameStore.getState().setMoneyChange({ delta })
-                return newMoney
-              })
+                // return newMoney
+                useGameStore.getState().setMoney(newMoney)
             },
             onGambleResult: (
               userID: string,
@@ -167,7 +169,8 @@ export default function Game4a() {
               newMoney: number,
             ) => {
               if (!authUser || userID !== authUser.uid) return
-              setMoney(newMoney)
+              // setMoney(newMoney)
+              useGameStore.getState().setMoney(newMoney)
             },
             onPlayerMoved: (userID: string, newPosition: number) => {
               if (!authUser || userID !== authUser.uid) return
@@ -206,18 +209,22 @@ export default function Game4a() {
     const ef = tile.effect as { type?: string; amount?: number } | undefined
     if (!ef || !ef.type) return
 
+    const currentMoney = useGameStore.getState().money
+
     if (ef.type === 'profit') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt) {
         useGameStore.getState().setMoneyChange({ delta: amt })
-        setMoney((p) => p + amt)
+        // setMoney((p) => p + amt)
+        useGameStore.getState().setMoney(currentMoney + amt)
         console.log('[Game4a] PROFIT tile:', tileId, '+', amt)
       }
     } else if (ef.type === 'loss') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt) {
         useGameStore.getState().setMoneyChange({ delta: -amt })
-        setMoney((p) => p - amt)
+        // setMoney((p) => p - amt)
+        useGameStore.getState().setMoney(currentMoney - amt)
         console.log('[Game4a] LOSS tile:', tileId, '-', amt)
       }
     }
@@ -373,8 +380,8 @@ export default function Game4a() {
         {/* イベントモーダル（Game1互換：Money と eventMessage を受け渡し） */}
         {EventComp && (
           <EventComp
-            currentMoney={money}
-            onUpdateMoney={setMoney}
+            // currentMoney={money}
+            // onUpdateMoney={setMoney}
             eventMessage={currentEventDetail ?? ''}
             onClose={() => {
               setActiveEventColor(null)

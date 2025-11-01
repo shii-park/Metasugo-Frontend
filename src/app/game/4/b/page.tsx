@@ -99,7 +99,8 @@ export default function Game4b() {
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
 
   // 所持金
-  const [money, setMoney] = useState<number>(1000000)
+  // const [money, setMoney] = useState<number>(1000000)
+  const money = useGameStore((state) => state.money)
 
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
   const [, setExpectedFinalStep] = useState<number | null>(null)
@@ -151,12 +152,13 @@ export default function Game4b() {
             },
             onMoneyChanged: (userID: string, newMoney: number) => {
               if (!authUser || userID !== authUser.uid) return
-              setMoney((prev) => {
+              // setMoney((prev) => {
+              const prev = useGameStore.getState().money 
                 const delta = newMoney - prev
                 if (delta !== 0)
                   useGameStore.getState().setMoneyChange({ delta })
-                return newMoney
-              })
+                // return newMoney
+                useGameStore.getState().setMoney(newMoney)
             },
             onGambleResult: (
               _u: string,
@@ -166,7 +168,8 @@ export default function Game4b() {
               _amt: number,
               newMoney: number,
             ) => {
-              setMoney(newMoney)
+              // setMoney(newMoney)
+              useGameStore.getState().setMoney(newMoney)
             },
             onPlayerMoved: (userID: string, newPosition: number) => {
               if (!authUser || userID !== authUser.uid) return
@@ -205,17 +208,21 @@ export default function Game4b() {
     const ef = tile.effect as { type?: string; amount?: number } | undefined
     if (!ef || !ef.type) return
 
+    const currentMoney = useGameStore.getState().money
+
     if (ef.type === 'profit') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt) {
         useGameStore.getState().setMoneyChange({ delta: amt })
-        setMoney((p) => p + amt)
+        // setMoney((p) => p + amt)
+        useGameStore.getState().setMoney(currentMoney + amt)
       }
     } else if (ef.type === 'loss') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt) {
         useGameStore.getState().setMoneyChange({ delta: -amt })
-        setMoney((p) => p - amt)
+        // setMoney((p) => p - amt)
+        useGameStore.getState().setMoney(currentMoney - amt)
       }
     }
   }
@@ -364,8 +371,8 @@ export default function Game4b() {
 
         {EventComp && (
           <EventComp
-            currentMoney={money}
-            onUpdateMoney={setMoney}
+            // currentMoney={money}
+            // onUpdateMoney={setMoney}
             eventMessage={currentEventDetail ?? ''}
             onClose={() => {
               setActiveEventColor(null)

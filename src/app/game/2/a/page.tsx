@@ -116,7 +116,8 @@ export default function Game2a() {
   const [currentEventDetail, setCurrentEventDetail] = useState<string | null>(null)
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
 
-  const [money, setMoney] = useState<number>(1_000_000)
+  // const [money, setMoney] = useState<number>(1_000_000)
+  const money = useGameStore((state) => state.money)
 
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
@@ -164,11 +165,12 @@ export default function Game2a() {
             },
             onMoneyChanged: (userID: string, newMoney: number) => {
               if (!authUser || userID !== authUser.uid) return
-              setMoney((prev) => {
+              // setMoney((prev) => {
+              const prev = useGameStore.getState().money
                 const delta = newMoney - prev
                 if (delta !== 0) useGameStore.getState().setMoneyChange({ delta })
-                return newMoney
-              })
+              //   return newMoney
+              // })
             },
             onGambleResult: (
               userID: string,
@@ -179,7 +181,8 @@ export default function Game2a() {
               newMoney: number,
             ) => {
               if (!authUser || userID !== authUser.uid) return
-              setMoney(newMoney)
+              // setMoney(newMoney)
+              useGameStore.getState().setMoney(newMoney)
             },
             onPlayerMoved: (userID: string, newPosition: number) => {
               if (!authUser || userID !== authUser.uid) return
@@ -215,17 +218,21 @@ export default function Game2a() {
     const ef = tile.effect as { type?: string; amount?: number } | undefined
     if (!ef?.type) return
 
+    const currentMoney = useGameStore.getState().money
+
     if (ef.type === 'profit') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt) {
         useGameStore.getState().setMoneyChange({ delta: amt })
-        setMoney((p) => p + amt)
+        // setMoney((p) => p + amt)
+        useGameStore.getState().setMoney(currentMoney + amt)
       }
     } else if (ef.type === 'loss') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt) {
         useGameStore.getState().setMoneyChange({ delta: -amt })
-        setMoney((p) => p - amt)
+        // setMoney((p) => p - amt)
+        useGameStore.getState().setMoney(currentMoney - amt)
       }
     }
   }
@@ -363,8 +370,8 @@ export default function Game2a() {
         {/* イベント */}
         {EventComp && (
           <EventComp
-            currentMoney={money}
-            onUpdateMoney={setMoney}
+            // currentMoney={money}
+            // onUpdateMoney={setMoney}
             eventMessage={currentEventDetail ?? ''}
             onClose={() => {
               setActiveEventColor(null)

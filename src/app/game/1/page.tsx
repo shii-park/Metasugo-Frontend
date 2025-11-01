@@ -89,7 +89,13 @@ export default function Game1() {
   const [activeEventColor, setActiveEventColor] = useState<string | null>(null)
   const [currentEventDetail, setCurrentEventDetail]=useState<string |null>(null)
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
-  const [money, setMoney] = useState<number>(1000000)
+
+  // ★ Gamble (MoneyPlus) に渡すための所持金 State
+  // (※) 100万円の初期値はここ (親ページ) で設定
+  // const [money, setMoney] = useState<number>(1000000)
+
+  const money = useGameStore((state) => state.money)
+  // const setMoney = useGameStore((state) => state.setMoney)
 
   // ★ 1. activeEventColor の最新値を参照するための Ref を作成
   const activeEventColorRef = useRef(activeEventColor)
@@ -156,7 +162,6 @@ export default function Game1() {
             // ★ 修正点: onMoneyChanged
             onMoneyChanged: (userID: string, newMoney: number) => {
               if (!authUser || userID !== authUser.uid) return
-
               // ★ 2. バグ対策: モーダルが開いていない時は無視
               // (ROLL_DICE 直後の不要な更新をブロックする)
               if (activeEventColorRef.current === null) {
@@ -165,13 +170,15 @@ export default function Game1() {
               }
 
               console.log('[WS] MONEY_CHANGED for me (processing):', newMoney)
-              setMoney((prev) => {
+              // setMoney((prev) => {
+                const prev = useGameStore.getState().money
                 const delta = newMoney - prev
                 if (delta !== 0) {
                   useGameStore.getState().setMoneyChange({ delta })
                 }
-                return newMoney
-              })
+                // return newMoney // ★ 総額を更新
+                useGameStore.getState().setMoney(newMoney)
+              // })
             },
 
             // ★ 修正点: onGambleResult
@@ -192,11 +199,13 @@ export default function Game1() {
                 return // ★ 無視
               }
 
-              // (Gamble.tsx が API(POST) で通信する場合、
-              //  APIレスポンスの onUpdateMoney とこのWSが両方 setMoney を呼ぶが、
-              //  モーダルが開いているので、ここで実行されるのは正しい動作)
-              console.log('[WS] GAMBLE_RESULT for me (processing):', newMoney)
-              setMoney(newMoney)
+              // もし Gamble.tsx がWSで通信する場合、
+              // このハンドラがGambleの結果を受け取る唯一の方法になる
+              // その場合、setMoney(newMoney) で総額を更新する
+
+              console.log('[WS] GAMBLE_RESULT for me:', newMoney)
+              // setMoney(newMoney)
+              useGameStore.getState().setMoney(newMoney)
             },
 
             onPlayerMoved: (userID: string, newPosition: number) => {
@@ -234,18 +243,24 @@ export default function Game1() {
     const ef = tile.effect as { type?: string; amount?: number } | undefined
     if (!ef || !ef.type) return
 
-    // (setMoney は削除済みで正しい)
+    const currentMoney = useGameStore.getState().money
+
+    // ★ 変更点: setMoney (総額更新) を使う
     if (ef.type === 'profit') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt !== 0) {
         useGameStore.getState().setMoneyChange({ delta: amt })
-        console.log('[Game1] PROFIT tile:', tileId, 'delta:', amt)
+        useGameStore.getState().setMoney(currentMoney + amt)
+        // setMoney((prev) => prev + amt) // ★ 総額を更新
+        console.log('[Game1] PROFIT tile:', tileId, '+', amt)
       }
     } else if (ef.type === 'loss') {
       const amt = Number(ef.amount ?? 0) || 0
       if (amt !== 0) {
         useGameStore.getState().setMoneyChange({ delta: -amt })
-        console.log('[Game1] LOSS tile:', tileId, 'delta:', -amt)
+        // setMoney((prev) => prev - amt) // ★ 総額を更新
+        useGameStore.getState().setMoney( currentMoney - amt)
+        console.log('[Game1] LOSS tile:', tileId, '-', amt)
       }
     }
   }
@@ -487,9 +502,11 @@ export default function Game1() {
         {/* ★ ゴール等のイベントモーダル (Gamble に props を渡す) ★ */}
         {EventComp && (
           <EventComp
-            // (props は変更なし)
-            currentMoney={money}
-            onUpdateMoney={setMoney}
+            // ▼▼▼ ここから2行が Gamble のために追加 ▼▼▼
+            // currentMoney={money}
+            // onUpdateMoney={setMoney} // Game1のsetMoney(総額更新)を渡す
+            // ▲▲▲ ここまで追加 ▲▲▲
+
             eventMessage={currentEventDetail ?? ''}
             onClose={() => {
               console.log(
