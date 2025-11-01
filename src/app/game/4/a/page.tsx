@@ -38,7 +38,7 @@ import {
 } from '@/lib/game/wsClient'
 
 // ===== レイアウト（4a） =====
-const START_POS = { col: 1, row: 9 }
+const START_POS = { col: 1, row: 5 }
 const positions = [
   { col: 1, row: 5 },
   { col: 3, row: 5 },

@@ -40,18 +40,18 @@ import {
 // ===== レイアウト（4b） =====
 const START_POS = { col: 1, row: 5 }
 const positions = [
-  { col: 7, row: 5 },
-  { col: 5, row: 5 },
-  { col: 3, row: 5 },
   { col: 1, row: 5 },
-  { col: 1, row: 3 },
-  { col: 3, row: 3 },
-  { col: 5, row: 3 },
+  { col: 3, row: 5 },
+  { col: 5, row: 5 },
+  { col: 7, row: 5 },
   { col: 7, row: 3 },
-  { col: 7, row: 1 },
-  { col: 5, row: 1 },
-  { col: 3, row: 1 },
+  { col: 5, row: 3 },
+  { col: 3, row: 3 },
+  { col: 1, row: 3 },
   { col: 1, row: 1 },
+  { col: 3, row: 1 },
+  { col: 5, row: 1 },
+  { col: 7, row: 1 },
 ]
 const TOTAL_TILES = positions.length
 
