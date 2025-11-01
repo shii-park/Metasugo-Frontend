@@ -250,12 +250,15 @@ function encodeUrlWithToken(base: string, token: string): string {
 }
 
 /** payload あり/なし、snake/camel 混在に耐える取り出し */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getPayload<T extends object = any>(msg: unknown): Partial<T> {
+function getPayload<T extends object = Record<string, unknown>>(msg: unknown): Partial<T> {
   if (!msg || typeof msg !== 'object') return {}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const anyMsg = msg as any
-  const p = anyMsg.payload ?? anyMsg
+
+  const payloadSource = 'payload' in msg && msg.payload ? msg.payload : msg
+  if (!payloadSource || typeof payloadSource !== 'object') {
+    return {}
+  }
+
+  const p = payloadSource as Record<string, unknown>
 
   // snake -> camel 柔軟対応
   const out: Record<string, unknown> = {}
@@ -370,9 +373,12 @@ export function connectGameSocket(
         return
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const type = (parsed as any)?.type as string
-      if (!type) return
+      if (typeof parsed !== 'object' || parsed === null || !('type' in parsed) || typeof parsed.type !== 'string') {
+        // 不正なメッセージ形式
+        console.error('[WS] invalid message format:', parsed)
+        return
+      }
+      const type = parsed.type
 
       switch (type) {
         case 'PONG':

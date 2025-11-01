@@ -39,7 +39,7 @@ export default function Ranking() {
         const token = await user.getIdToken()
         console.log('✅ 取得した ID トークン:', token)
 
-        const res = await fetch('http://localhost:8080/ranking', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_ORIGIN}/ranking`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
