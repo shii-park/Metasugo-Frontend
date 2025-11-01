@@ -32,7 +32,7 @@ import {
   QuizData,
 } from '@/lib/game/wsClient'
 
-const START_POS = { col: 9, row: 5 }
+const START_POS = { col: 7, row: 5 }
 
 // タイルの座標リスト（step = 1 -> positions[0] で描画してるやつ）
 const positions = [
