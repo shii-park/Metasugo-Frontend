@@ -495,12 +495,6 @@ export default function Game1() {
           />
         )}
         
-        {/* (分岐マスUI は変更なし) ... */}
-        {branchChoice && (
-          <div className='absolute inset-0 z-[200] flex items-center justify-center bg-black/40 text-white'>
-            {/* ... */}
-          </div>
-        )}
 
         {/* (未ログイン時UI は変更なし) ... */}
         {!authUser && (
