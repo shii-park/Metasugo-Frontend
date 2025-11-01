@@ -79,8 +79,9 @@ export default function DiceOverlay({
   const [isRollingAnim, setIsRollingAnim] = useState(false)
 
   // 「最終的に表示する確定値」
-  // これが null の間はまだ確定演出前（=回ってる状態扱い）
   const [finalValue, setFinalValue] = useState<DiceFaceValue | null>(null)
+  // finalValue がセットされた時刻を記録
+  const [finalValueSetAt, setFinalValueSetAt] = useState<number | null>(null)
 
   // オーバーレイを開いた時刻（アニメの最低再生時間を測る）
   const openedAtRef = useRef<number>(0)
@@ -95,11 +96,13 @@ export default function DiceOverlay({
       setRollingFace(1)
       setIsRollingAnim(true)
       setFinalValue(null)
+      setFinalValueSetAt(null) // ここもリセット
       openedAtRef.current = Date.now()
     } else {
       console.log('[DiceOverlay] CLOSE → アニメ停止')
       setIsRollingAnim(false)
       setFinalValue(null)
+      setFinalValueSetAt(null) // ここもリセット
     }
   }, [isOpen])
 
@@ -123,7 +126,7 @@ export default function DiceOverlay({
     }
   }, [isRollingAnim, finalValue])
 
-  // === サーバーから diceResult が届いたら、最低スピン時間を満たした後に確定させる ===
+  // === サーバーから diceResult が届いたら、すぐに確定させる ===
   useEffect(() => {
     // オーバーレイ閉じてたら無視
     if (!isOpen) return
@@ -132,23 +135,28 @@ export default function DiceOverlay({
     // すでに確定値セット済みなら何もしない
     if (finalValue !== null) return
 
-    const elapsed = Date.now() - openedAtRef.current
-    const waitMs = elapsed < MIN_SPIN_MS ? MIN_SPIN_MS - elapsed : 0
-
-    console.log(
-      `[DiceOverlay] diceResult(${diceResult}) 取得。elapsed=${elapsed}ms waitMs=${waitMs}ms`
-    )
-
-    const timeoutId = setTimeout(() => {
-      console.log('[DiceOverlay] 最終値を確定 ->', diceResult)
-      setFinalValue(diceResult)
-      setIsRollingAnim(false)
-    }, waitMs)
-
-    return () => {
-      clearTimeout(timeoutId)
-    }
+    console.log(`[DiceOverlay] diceResult(${diceResult}) 取得。すぐに最終値を確定 ->`, diceResult)
+    setFinalValue(diceResult)
+    setFinalValueSetAt(Date.now()) // 確定時刻を記録
+    setIsRollingAnim(false) // アニメーションはここで停止
   }, [diceResult, isOpen, finalValue])
+
+  // === ボタンの有効/無効を制御する useEffect ===
+  const [isButtonEnabled, setIsButtonEnabled] = useState(false)
+  useEffect(() => {
+    if (finalValue !== null && finalValueSetAt !== null) {
+      const elapsedSinceFinalValue = Date.now() - finalValueSetAt
+      const waitMs = elapsedSinceFinalValue < MIN_SPIN_MS ? MIN_SPIN_MS - elapsedSinceFinalValue : 0
+
+      const timeoutId = setTimeout(() => {
+        setIsButtonEnabled(true)
+      }, waitMs)
+
+      return () => clearTimeout(timeoutId)
+    } else {
+      setIsButtonEnabled(false) // finalValue が null の場合はボタンを無効にする
+    }
+  }, [finalValue, finalValueSetAt])
 
   // 実際に表示する目：
   // - finalValue が決まってたら finalValue
@@ -205,6 +213,7 @@ export default function DiceOverlay({
                   onClose()
                 }}
                 className="px-10 py-3 rounded-md bg-blue-default text-white text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-blue-300"
+                disabled={!isButtonEnabled} // ここで isButtonEnabled を使う
               >
                 マップに戻る
               </button>

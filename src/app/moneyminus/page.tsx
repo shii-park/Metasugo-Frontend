@@ -24,10 +24,10 @@ export default function TestPage() {
       <h1 className="text-xl font-bold">コンポーネントのテストページ</h1>
       <p>このページで MoneyMinus コンポーネントの表示を確認します。</p>
 
-      {/* isVisible が true の時だけ、MoneyMinus コンポーネントを表示する */}
+      {/* isVisible が true の時だけ、MoneyMinus コンポーネントを表示する
       {isVisible && (
         <MoneyMinus onClose={handleCloseDialog} />
-      )}
+      )} */}
 
       {/* （おまけ）非表示になった後、もう一度表示するためのボタン */}
       {!isVisible && (
