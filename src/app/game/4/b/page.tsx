@@ -212,8 +212,10 @@ export default function Game4b() {
             onBranchChoiceRequired: (tileID: number, options: number[]) => {
               setBranchChoice({ tileID, options })
             },
-            onPlayerFinished: (userID: string) => {
+            onPlayerFinished: (userID: string, finalMoney: number) => {
               if (!authUser || userID !== authUser.uid) return
+              setMoney(finalMoney)
+              useGameStore.getState().setMoney(finalMoney)
               try {
                 wsRef.current?.close()
               } finally {

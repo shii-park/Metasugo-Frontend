@@ -46,11 +46,11 @@ export default function Finish({
       >
         <div className="text-[#5B7BA6] text-3xl font-bold m-4">{title}</div>
 
-        {/* 💰 合計金額表示 */}
         <div className="font-bold rounded-md bg-white text-l text-[#5B7BA6] flex-col items-center justify-center px-6 py-4 mb-4 w-3/5 mx-auto">
-          <p className="flex justify-between w-full">
-            <p>これでゲームは終了です！</p>
-          </p>
+          <div className="flex flex-col items-center text-center">
+            <p className="mb-2">あなたが人生で獲得した金額</p>
+            <p className="text-2xl font-bold">{totalMoney.toLocaleString()}円</p>
+          </div>
         </div>
 
         <button
