@@ -8,10 +8,11 @@ type Props = {
   currentMoney: number;
   onUpdateMoney: (newTotal: number) => void;
   onClose: () => void;
+  eventMessage: string;
 }
 
 // ★ 修正点: Props を受け取る
-export default function MoneyMinus({ currentMoney, onUpdateMoney, onClose }: Props) {
+export default function MoneyMinus({ currentMoney, onUpdateMoney, onClose, eventMessage }: Props) {
   const [showContent, setShowContent] = useState(false)
 
   // 差額(delta)はストアから読み取る
@@ -41,7 +42,8 @@ export default function MoneyMinus({ currentMoney, onUpdateMoney, onClose }: Pro
   }
 
   const isTitleOnly = !showContent
-  const contentLines = [`所持金が ${deltaAbs.toLocaleString()} 円減った`]
+  // const contentLines = [`所持金が ${deltaAbs.toLocaleString()} 円減った`]
+  const contentLines = eventMessage.split('\n');
 
   return (
     <div className="absolute z-50 inset-0 cursor-pointer" onClick={handleAdvance}>

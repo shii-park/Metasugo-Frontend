@@ -261,7 +261,7 @@ export default function Game2a() {
 
       setActiveEventColor(color ?? null)
       setCurrentEventDetail(
-        tileEventType === 'overall' || tileEventType === 'neighbor'
+        tileEventType === 'overall' || tileEventType === 'neighbor' || tileEventType === 'profit' || tileEventType === 'loss'
           ? (currentTile?.detail ?? '')
           : null,
       )

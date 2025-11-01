@@ -285,7 +285,7 @@ export default function Game1() {
 
       if (color && EVENT_BY_COLOR[color]) {
         setActiveEventColor(color)
-        if (tileEventType === 'overall' || tileEventType === 'neighbor'){ // 'global' のタイポ？
+        if (tileEventType === 'overall' || tileEventType === 'neighbor' || tileEventType === 'profit' || tileEventType === 'loss'){ // 'global' のタイポ？
           console.log("[DUBUG] Setting EventDetail:", tileDetail);
           setCurrentEventDetail(tileDetail);
         }else{

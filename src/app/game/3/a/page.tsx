@@ -207,7 +207,7 @@ export default function Game3a() {
 
       if (color && EVENT_BY_COLOR[color]) {
         setActiveEventColor(color)
-        if (tileEventType === 'overall' || tileEventType === 'neighbor') {
+        if (tileEventType === 'overall' || tileEventType === 'neighbor' || tileEventType === 'profit' || tileEventType === 'loss') {
           setCurrentEventDetail(tileDetail)
         }
         if (isGoal) setGoalAwaitingEventClose(true)
