@@ -62,11 +62,14 @@ const PAD_BOTTOM = 7
 const TILE_IDS = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26] as const
 const tileIdAt = (pos: number) => TILE_IDS[pos - 1] // pos: 1..12
 
+/** このページの「最後のマス」で強制するイベント種別 */
+const FORCE_LAST_EVENT: EventType = 'branch'
+
 /** effect.type を優先して EventType を判定（無い場合は kind からフォールバック） */
 function eventTypeOfTile(tile?: TileType): EventType | undefined {
   if (!tile) return undefined
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const t = (tile.effect as any)?.type as string | undefined
+  const t = (tile?.effect as any)?.type as string | undefined
   switch (t) {
     case 'profit':
     case 'loss':
@@ -82,14 +85,7 @@ function eventTypeOfTile(tile?: TileType): EventType | undefined {
     case 'childBonus':
       return t as EventType
   }
-  return kindToEventType(tile.kind)
-}
-
-/** 盤面 index（1..12）から色クラスを返す。必ず pos→id を通す */
-const colorOfPos = (posIndex: number, tileById: Map<number, TileType>) => {
-  const id = tileIdAt(posIndex)
-  const ev = eventTypeOfTile(tileById.get(id))
-  return colorClassOfEvent(ev)
+  return kindToEventType(tile?.kind)
 }
 
 export default function Game2a() {
@@ -129,6 +125,14 @@ export default function Game2a() {
   const wsRef = useRef<GameSocketConnection | null>(null)
 
   const cur = useMemo(() => (step === 0 ? START_POS : positions[step - 1]), [step])
+
+  /** 盤面 index（1..12）から色クラスを返す。最後は強制イベントを適用 */
+  const colorOfPos = (posIndex: number) => {
+    const id = tileIdAt(posIndex)
+    const isLast = posIndex === TOTAL_TILES
+    const ev = isLast ? FORCE_LAST_EVENT : eventTypeOfTile(tileById.get(id))
+    return colorClassOfEvent(ev)
+  }
 
   /* ===== 認証監視 ===== */
   useEffect(() => {
@@ -247,11 +251,12 @@ export default function Game2a() {
       const tileId = tileIdAt(pos)
       runTileEffectByTileId(tileId)
 
-      const isGoal = pos === TOTAL_TILES
+      const isLast = pos === TOTAL_TILES
       const currentTile = tileById.get(tileId)
 
-      // goal マスは 'goal' を優先
-      const tileEventType: EventType | undefined = isGoal ? 'goal' : eventTypeOfTile(currentTile)
+      // ★ 最後は必ず Branch にする（このページ仕様）
+      const forced: EventType | undefined = isLast ? FORCE_LAST_EVENT : undefined
+      const tileEventType: EventType | undefined = forced ?? eventTypeOfTile(currentTile)
       const color = colorClassOfEvent(tileEventType)
 
       setActiveEventColor(color ?? null)
@@ -260,7 +265,9 @@ export default function Game2a() {
           ? (currentTile?.detail ?? '')
           : null,
       )
-      setGoalAwaitingEventClose(isGoal)
+
+      // ★ Branch は自前で遷移するため、自動遷移フラグは goal のときのみ
+      setGoalAwaitingEventClose(tileEventType === 'goal')
     }
   }
 
@@ -315,7 +322,7 @@ export default function Game2a() {
           onConfirm={handleDiceConfirm}
         />
 
-        {/* タイル配置：色決定も pos→id 経由で統一 */}
+        {/* タイル配置：色決定も pos→id 経由で統一（最後は Branch を強制） */}
         <div
           className="absolute inset-0 grid grid-cols-7 grid-rows-5 px-[8%] pt-[8.5%] pb-[8%]"
           style={{
@@ -324,20 +331,20 @@ export default function Game2a() {
           }}
         >
           {/* 下段 1..4 */}
-          <Tile col={1} row={5} colorClass={colorOfPos(1, tileById)} className="w-full h-full" />
-          <Tile col={3} row={5} colorClass={colorOfPos(2, tileById)} className="w-full h-full" />
-          <Tile col={5} row={5} colorClass={colorOfPos(3, tileById)} className="w-full h-full" />
-          <Tile col={7} row={5} colorClass={colorOfPos(4, tileById)} className="w-full h-full" />
+          <Tile col={1} row={5} colorClass={colorOfPos(1)} className="w-full h-full" />
+          <Tile col={3} row={5} colorClass={colorOfPos(2)} className="w-full h-full" />
+          <Tile col={5} row={5} colorClass={colorOfPos(3)} className="w-full h-full" />
+          <Tile col={7} row={5} colorClass={colorOfPos(4)} className="w-full h-full" />
           {/* 中段 5..8（R→L） */}
-          <Tile col={7} row={3} colorClass={colorOfPos(5, tileById)} className="w-full h-full" />
-          <Tile col={5} row={3} colorClass={colorOfPos(6, tileById)} className="w-full h-full" />
-          <Tile col={3} row={3} colorClass={colorOfPos(7, tileById)} className="w-full h-full" />
-          <Tile col={1} row={3} colorClass={colorOfPos(8, tileById)} className="w-full h-full" />
+          <Tile col={7} row={3} colorClass={colorOfPos(5)} className="w-full h-full" />
+          <Tile col={5} row={3} colorClass={colorOfPos(6)} className="w-full h-full" />
+          <Tile col={3} row={3} colorClass={colorOfPos(7)} className="w-full h-full" />
+          <Tile col={1} row={3} colorClass={colorOfPos(8)} className="w-full h-full" />
           {/* 上段 9..12 */}
-          <Tile col={1} row={1} colorClass={colorOfPos(9, tileById)} className="w-full h-full" />
-          <Tile col={3} row={1} colorClass={colorOfPos(10, tileById)} className="w-full h-full" />
-          <Tile col={5} row={1} colorClass={colorOfPos(11, tileById)} className="w-full h-full" />
-          <Tile col={7} row={1} colorClass={colorOfPos(12, tileById)} className="w-full h-full" />
+          <Tile col={1} row={1} colorClass={colorOfPos(9)} className="w-full h-full" />
+          <Tile col={3} row={1} colorClass={colorOfPos(10)} className="w-full h-full" />
+          <Tile col={5} row={1} colorClass={colorOfPos(11)} className="w-full h-full" />
+          <Tile col={7} row={1} colorClass={colorOfPos(12)} className="w-full h-full" />
         </div>
 
         {/* プレイヤー */}
@@ -365,10 +372,11 @@ export default function Game2a() {
               useGameStore.getState().clearMoneyChange()
               useGameStore.getState().clearNeighborReq()
 
+              // ★ goal の時のみ自動遷移（このページでは基本的に発火しない）
               if (goalAwaitingEventClose && !goalPushedRef.current) {
                 goalPushedRef.current = true
                 setGoalAwaitingEventClose(false)
-                router.push('/game/3/a') // ★ 2a → 3a
+                router.push('/game/3/a')
               }
             }}
           />
