@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { connectGameSocket, type GameSocketConnection } from "../../lib/game/wsClient";
+import { useIdToken } from "@/lib/firebase/useIdToken"; // useIdTokenをインポート
 
 export default function Example() {
     const [isStatus, setIsStatus] = useState(false);
+    const { token } = useIdToken(); // tokenを取得
 
     // プレイヤーの初期ステータス（デフォルト値）
     const [playerStatus, setPlayerStatus] = useState({
@@ -14,6 +16,8 @@ export default function Example() {
     });
 
     useEffect(() => {
+        if (!token) return; // tokenがなければ何もしない
+
         // WebSocket 接続
         const socket: GameSocketConnection = connectGameSocket({
             onPlayerStatusChanged: (userID, status, value) => {
@@ -40,10 +44,10 @@ export default function Example() {
                 return next;
             });
         },
-    });
+    }, token); // tokenを渡す
 
     return () => socket.close();
-    }, []);
+    }, [token]); // tokenを依存配列に追加
 
     return (
         <div className="flex items-start rounded-md bg-black/50 text-white h-[100px]">
