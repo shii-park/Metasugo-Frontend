@@ -64,11 +64,14 @@ const PAD_BOTTOM = 7
 const TILE_IDS = [67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78] as const
 const tileIdAt = (pos: number) => TILE_IDS[pos - 1] // pos: 1..12
 
+/** このページの「最後のマス」で強制するイベント種別 */
+const FORCE_LAST_EVENT: EventType = 'branch'
+
 /** effect.type を優先して EventType を判定（無い場合は kind からフォールバック） */
 function eventTypeOfTile(tile?: TileType): EventType | undefined {
   if (!tile) return undefined
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const t = (tile.effect as any)?.type as string | undefined
+  const t = (tile?.effect as any)?.type as string | undefined
   switch (t) {
     case 'profit':
     case 'loss':
@@ -84,14 +87,7 @@ function eventTypeOfTile(tile?: TileType): EventType | undefined {
     case 'childBonus':
       return t as EventType
   }
-  return kindToEventType(tile.kind)
-}
-
-/** 盤面 index（1..12）から色クラスを返す。必ず pos→id を通す */
-const colorOfPos = (posIndex: number, tileById: Map<number, TileType>) => {
-  const id = tileIdAt(posIndex)
-  const ev = eventTypeOfTile(tileById.get(id))
-  return colorClassOfEvent(ev)
+  return kindToEventType(tile?.kind)
 }
 
 export default function Game4a() {
@@ -147,6 +143,14 @@ export default function Game4a() {
     [step],
   )
 
+  /** 盤面 index（1..12）から色クラスを返す。最後は強制イベントを適用 */
+  const colorOfPos = (posIndex: number) => {
+    const id = tileIdAt(posIndex)
+    const isLast = posIndex === TOTAL_TILES
+    const ev = isLast ? FORCE_LAST_EVENT : eventTypeOfTile(tileById.get(id))
+    return colorClassOfEvent(ev)
+  }
+  
   // ===== 認証監視 =====
   useEffect(() => {
     const un = onAuthStateChanged(auth, (user) => {
@@ -365,20 +369,20 @@ export default function Game4a() {
           }}
         >
           {/* 下段 */}
-          <Tile col={1} row={5} colorClass={colorOfPos(1, tileById)} />
-          <Tile col={3} row={5} colorClass={colorOfPos(2, tileById)} />
-          <Tile col={5} row={5} colorClass={colorOfPos(3, tileById)} />
-          <Tile col={7} row={5} colorClass={colorOfPos(4, tileById)} />
+          <Tile col={1} row={5} colorClass={colorOfPos(1)} />
+          <Tile col={3} row={5} colorClass={colorOfPos(2)} />
+          <Tile col={5} row={5} colorClass={colorOfPos(3)} />
+          <Tile col={7} row={5} colorClass={colorOfPos(4)} />
 
-          <Tile col={7} row={3} colorClass={colorOfPos(5, tileById)} />
-          <Tile col={5} row={3} colorClass={colorOfPos(6, tileById)} />
-          <Tile col={3} row={3} colorClass={colorOfPos(7, tileById)} />
-          <Tile col={1} row={3} colorClass={colorOfPos(8, tileById)} />
+          <Tile col={7} row={3} colorClass={colorOfPos(5)} />
+          <Tile col={5} row={3} colorClass={colorOfPos(6)} />
+          <Tile col={3} row={3} colorClass={colorOfPos(7)} />
+          <Tile col={1} row={3} colorClass={colorOfPos(8)} />
 
-          <Tile col={1} row={1} colorClass={colorOfPos(9, tileById)} />
-          <Tile col={3} row={1} colorClass={colorOfPos(10, tileById)} />
-          <Tile col={5} row={1} colorClass={colorOfPos(11, tileById)} />
-          <Tile col={7} row={1} colorClass={colorOfPos(12, tileById)} />
+          <Tile col={1} row={1} colorClass={colorOfPos(9)} />
+          <Tile col={3} row={1} colorClass={colorOfPos(10)} />
+          <Tile col={5} row={1} colorClass={colorOfPos(11)} />
+          <Tile col={7} row={1} colorClass={colorOfPos(12)} />
           {/* 最後はゴール手前まで */}
         </div>
 
