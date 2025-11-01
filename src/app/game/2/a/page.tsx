@@ -268,20 +268,20 @@ export default function Game2a() {
           }}
         >
           {/* 下段 1..4 */}
-          <Tile col={1} row={5} colorClass={colorOf(1)} className="w-full h-full" />
-          <Tile col={3} row={5} colorClass={colorOf(2)} className="w-full h-full" />
-          <Tile col={5} row={5} colorClass={colorOf(3)} className="w-full h-full" />
-          <Tile col={7} row={5} colorClass={colorOf(4)} className="w-full h-full" />
+          <Tile col={1} row={5} colorClass={colorOf(15)} className="w-full h-full" />
+          <Tile col={3} row={5} colorClass={colorOf(16)} className="w-full h-full" />
+          <Tile col={5} row={5} colorClass={colorOf(17)} className="w-full h-full" />
+          <Tile col={7} row={5} colorClass={colorOf(18)} className="w-full h-full" />
           {/* 中段 5..8（R→L） */}
-          <Tile col={7} row={3} colorClass={colorOf(5)} className="w-full h-full" />
-          <Tile col={5} row={3} colorClass={colorOf(6)} className="w-full h-full" />
-          <Tile col={3} row={3} colorClass={colorOf(7)} className="w-full h-full" />
-          <Tile col={1} row={3} colorClass={colorOf(8)} className="w-full h-full" />
+          <Tile col={7} row={3} colorClass={colorOf(19)} className="w-full h-full" />
+          <Tile col={5} row={3} colorClass={colorOf(20)} className="w-full h-full" />
+          <Tile col={3} row={3} colorClass={colorOf(21)} className="w-full h-full" />
+          <Tile col={1} row={3} colorClass={colorOf(22)} className="w-full h-full" />
           {/* 上段 9..12 */}
-          <Tile col={1} row={1} colorClass={colorOf(9)} className="w-full h-full" />
-          <Tile col={3} row={1} colorClass={colorOf(10)} className="w-full h-full" />
-          <Tile col={5} row={1} colorClass={colorOf(11)} className="w-full h-full" />
-          <Tile col={7} row={1} colorClass={colorOf(12)} className="w-full h-full" />
+          <Tile col={1} row={1} colorClass={colorOf(23)} className="w-full h-full" />
+          <Tile col={3} row={1} colorClass={colorOf(24)} className="w-full h-full" />
+          <Tile col={5} row={1} colorClass={colorOf(25)} className="w-full h-full" />
+          <Tile col={7} row={1} colorClass={colorOf(26)} className="w-full h-full" />
         </div>
 
         {/* プレイヤー */}

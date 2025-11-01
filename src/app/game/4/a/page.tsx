@@ -314,7 +314,7 @@ export default function Game4a() {
         </div>
 
         {/* ゴール表示 */}
-        <div className='absolute top-[10%] sm:top-[12%] right-[13%] rounded-md bg-brown-default/90 text-white border-2 border-white w-[20%] h-[20%] font-bold text-xl md:text-3xl flex items-center justify-center'>
+        <div className='absolute top-[10%] sm:top-[12%] right-[13%] rounded-md bg-brown-default/90 text-white border-2 border-white w-[20%] h-[20%] font-bold text-xl md:text-3xl flex items-center justify-center z-20'>
           ゴール
         </div>
 
@@ -340,21 +340,21 @@ export default function Game4a() {
           }}
         >
           {/* 下段 1..4 */}
-          <Tile col={1} row={5} colorClass={colorOf(1)} />
-          <Tile col={3} row={5} colorClass={colorOf(2)} />
-          <Tile col={5} row={5} colorClass={colorOf(3)} />
-          <Tile col={7} row={5} colorClass={colorOf(4)} />
+          <Tile col={1} row={5} colorClass={colorOf(67)} />
+          <Tile col={3} row={5} colorClass={colorOf(68)} />
+          <Tile col={5} row={5} colorClass={colorOf(69)} />
+          <Tile col={7} row={5} colorClass={colorOf(70)} />
 
-          <Tile col={7} row={3} colorClass={colorOf(5)} />
-          <Tile col={5} row={3} colorClass={colorOf(6)} />
-          <Tile col={3} row={3} colorClass={colorOf(7)} />
-          <Tile col={1} row={3} colorClass={colorOf(8)} />
+          <Tile col={7} row={3} colorClass={colorOf(71)} />
+          <Tile col={5} row={3} colorClass={colorOf(72)} />
+          <Tile col={3} row={3} colorClass={colorOf(73)} />
+          <Tile col={1} row={3} colorClass={colorOf(74)} />
 
-          <Tile col={1} row={1} colorClass={colorOf(9)} />
-          <Tile col={3} row={1} colorClass={colorOf(10)} />
-          <Tile col={5} row={1} colorClass={colorOf(11)} />
+          <Tile col={1} row={1} colorClass={colorOf(75)} />
+          <Tile col={3} row={1} colorClass={colorOf(76)} />
+          <Tile col={5} row={1} colorClass={colorOf(77)} />
           {/* 12マス目はプレイヤーの着地でゴール扱いにするので色は不要でもOK（必要なら colorOf(12)）*/}
-          {/* <Tile col={7} row={1} colorClass={colorOf(12)} /> */}
+          <Tile col={7} row={1} colorClass={colorOf(78)} />
         </div>
 
         {/* プレイヤー */}

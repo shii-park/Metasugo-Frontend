@@ -283,22 +283,22 @@ export default function Game3a() {
             gridTemplateRows: '18% 20% 18% 26% 18%',
           }}
         >
-          <Tile col={7} row={5} colorClass={colorOf(1)} />
-          <Tile col={5} row={5} colorClass={colorOf(2)} />
-          <Tile col={3} row={5} colorClass={colorOf(3)} />
-          <Tile col={1} row={5} colorClass={colorOf(4)} />
+          <Tile col={7} row={5} colorClass={colorOf(39)} />
+          <Tile col={5} row={5} colorClass={colorOf(40)} />
+          <Tile col={3} row={5} colorClass={colorOf(41)} />
+          <Tile col={1} row={5} colorClass={colorOf(42)} />
 
-          <Tile col={1} row={3} colorClass={colorOf(5)} />
-          <Tile col={3} row={3} colorClass={colorOf(6)} />
-          <Tile col={5} row={3} colorClass={colorOf(7)} />
-          <Tile col={7} row={3} colorClass={colorOf(8)} />
-          <Tile col={9} row={3} colorClass={colorOf(9)} />
+          <Tile col={1} row={3} colorClass={colorOf(43)} />
+          <Tile col={3} row={3} colorClass={colorOf(44)} />
+          <Tile col={5} row={3} colorClass={colorOf(45)} />
+          <Tile col={7} row={3} colorClass={colorOf(46)} />
+          <Tile col={9} row={3} colorClass={colorOf(47)} />
 
-          <Tile col={9} row={1} colorClass={colorOf(10)} />
-          <Tile col={7} row={1} colorClass={colorOf(11)} />
-          <Tile col={5} row={1} colorClass={colorOf(12)} />
-          <Tile col={3} row={1} colorClass={colorOf(13)} />
-          <Tile col={1} row={1} colorClass={colorOf(14)} />
+          <Tile col={9} row={1} colorClass={colorOf(48)} />
+          <Tile col={7} row={1} colorClass={colorOf(49)} />
+          <Tile col={5} row={1} colorClass={colorOf(50)} />
+          <Tile col={3} row={1} colorClass={colorOf(51)} />
+          <Tile col={1} row={1} colorClass={colorOf(52)} />
         </div>
 
         {/* プレイヤー */}

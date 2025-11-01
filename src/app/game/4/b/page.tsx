@@ -306,7 +306,7 @@ export default function Game4b() {
         </div>
 
         {/* ゴール */}
-        <div className='absolute top-[10%] sm:top-[12%] right-[13%] rounded-md bg-brown-default/90 text-white border-2 border-white w-[20%] h-[20%] font-bold text-xl md:text-3xl flex items-center justify-center'>
+        <div className='absolute top-[10%] sm:top-[12%] right-[13%] rounded-md bg-brown-default/90 text-white border-2 border-white w-[20%] h-[20%] font-bold text-xl md:text-3xl flex items-center justify-center z-20'>
           ゴール
         </div>
 
@@ -332,19 +332,19 @@ export default function Game4b() {
           }}
         >
           {/* 下段 */}
-          <Tile col={1} row={5} colorClass={colorOf(1)} />
-          <Tile col={3} row={5} colorClass={colorOf(2)} />
-          <Tile col={5} row={5} colorClass={colorOf(3)} />
-          <Tile col={7} row={5} colorClass={colorOf(4)} />
+          <Tile col={1} row={5} colorClass={colorOf(79)} />
+          <Tile col={3} row={5} colorClass={colorOf(80)} />
+          <Tile col={5} row={5} colorClass={colorOf(81)} />
+          <Tile col={7} row={5} colorClass={colorOf(82)} />
 
-          <Tile col={7} row={3} colorClass={colorOf(5)} />
-          <Tile col={5} row={3} colorClass={colorOf(6)} />
-          <Tile col={3} row={3} colorClass={colorOf(7)} />
-          <Tile col={1} row={3} colorClass={colorOf(8)} />
+          <Tile col={7} row={3} colorClass={colorOf(83)} />
+          <Tile col={5} row={3} colorClass={colorOf(84)} />
+          <Tile col={3} row={3} colorClass={colorOf(85)} />
+          <Tile col={1} row={3} colorClass={colorOf(86)} />
 
-          <Tile col={1} row={1} colorClass={colorOf(9)} />
-          <Tile col={3} row={1} colorClass={colorOf(10)} />
-          <Tile col={5} row={1} colorClass={colorOf(11)} />
+          <Tile col={1} row={1} colorClass={colorOf(87)} />
+          <Tile col={3} row={1} colorClass={colorOf(88)} />
+          <Tile col={5} row={1} colorClass={colorOf(78)} />
           {/* 最後はゴール手前まで */}
         </div>
 
