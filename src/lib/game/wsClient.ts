@@ -3,7 +3,7 @@
 /**
  * WebSocketクライアント (フロント側)
  *
- * - NEXT_PUBLIC_WS_URL でサーバー (例: ws://localhost:8080/ws/connection)
+ * - NEXT_PUBLIC_WS_URL でサーバー (例: ws://localhost:8080/ws)
  * - 認証は URL の ?token=... で付与
  * - 自動再接続 / ハートビート / 送信キュー付き
  */

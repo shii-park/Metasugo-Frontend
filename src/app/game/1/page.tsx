@@ -36,10 +36,11 @@ import {
   QuizData, // ★ 型をインポート
 } from '@/lib/game/wsClient'
 
-const START_POS = { col: 7, row: 5 }
+const START_POS = { col: 9, row: 5 }
 
 // タイルの座標リスト（step = 1 -> positions[0] で描画してるやつ）
 const positions = [
+  { col: 7, row: 5 },
   { col: 5, row: 5 },
   { col: 3, row: 5 },
   { col: 1, row: 5 },
@@ -409,7 +410,7 @@ export default function Game1() {
           <Status />
         </div>
 
-        <div className='absolute bottom-[10%] sm:bottom-[12%] right-[18%] rounded-md bg-brown-default/90 text-white border-2 border-white px-4 py-2 md:py-8 md:px-12 font-bold text-xl md:text-3xl'>
+        <div className='absolute bottom-[10%] sm:bottom-[12%] right-[18%] rounded-md bg-brown-default/90 text-white border-2 border-white px-4 py-2 md:py-8 md:px-12 font-bold text-xl md:text-3xl z-20'>
           スタート
         </div>
 
@@ -440,81 +441,87 @@ export default function Game1() {
         >
           {/* (Tile コンポーネント群は省略) */}
           <Tile
-            col={5}
+            col={7}
             row={5}
             colorClass={colorOf(1)}
             className='w-full h-full'
           />
           <Tile
-            col={3}
+            col={5}
             row={5}
             colorClass={colorOf(2)}
             className='w-full h-full'
           />
           <Tile
-            col={1}
+            col={3}
             row={5}
             colorClass={colorOf(3)}
             className='w-full h-full'
           />
           <Tile
             col={1}
-            row={3}
+            row={5}
             colorClass={colorOf(4)}
             className='w-full h-full'
           />
           <Tile
-            col={3}
+            col={1}
             row={3}
             colorClass={colorOf(5)}
             className='w-full h-full'
           />
           <Tile
-            col={6}
+            col={3}
             row={3}
             colorClass={colorOf(6)}
             className='w-full h-full'
           />
           <Tile
-            col={7}
+            col={5}
             row={3}
             colorClass={colorOf(7)}
             className='w-full h-full'
           />
           <Tile
-            col={9}
+            col={7}
             row={3}
             colorClass={colorOf(8)}
             className='w-full h-full'
           />
           <Tile
             col={9}
-            row={1}
+            row={3}
             colorClass={colorOf(9)}
             className='w-full h-full'
           />
           <Tile
-            col={7}
+            col={9}
             row={1}
             colorClass={colorOf(10)}
             className='w-full h-full'
           />
           <Tile
-            col={5}
+            col={7}
             row={1}
             colorClass={colorOf(11)}
             className='w-full h-full'
           />
           <Tile
-            col={3}
+            col={5}
             row={1}
             colorClass={colorOf(12)}
             className='w-full h-full'
           />
           <Tile
-            col={1}
+            col={3}
             row={1}
             colorClass={colorOf(13)}
+            className='w-full h-full'
+          />
+          <Tile
+            col={1}
+            row={1}
+            colorClass={colorOf(14)}
             className='w-full h-full'
           />
         </div>

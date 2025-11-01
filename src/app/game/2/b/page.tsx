@@ -244,20 +244,20 @@ export default function Game2b() {
             gridTemplateRows: '17% 23.5% 17% 24% 17%',
           }}
         >
-          <Tile col={1} row={5} colorClass={colorOf(1)} className="w-full h-full" />
-          <Tile col={3} row={5} colorClass={colorOf(2)} className="w-full h-full" />
-          <Tile col={5} row={5} colorClass={colorOf(3)} className="w-full h-full" />
-          <Tile col={7} row={5} colorClass={colorOf(4)} className="w-full h-full" />
+          <Tile col={1} row={5} colorClass={colorOf(27)} className="w-full h-full" />
+          <Tile col={3} row={5} colorClass={colorOf(28)} className="w-full h-full" />
+          <Tile col={5} row={5} colorClass={colorOf(29)} className="w-full h-full" />
+          <Tile col={7} row={5} colorClass={colorOf(30)} className="w-full h-full" />
 
-          <Tile col={7} row={3} colorClass={colorOf(5)} className="w-full h-full" />
-          <Tile col={5} row={3} colorClass={colorOf(6)} className="w-full h-full" />
-          <Tile col={3} row={3} colorClass={colorOf(7)} className="w-full h-full" />
-          <Tile col={1} row={3} colorClass={colorOf(8)} className="w-full h-full" />
+          <Tile col={7} row={3} colorClass={colorOf(31)} className="w-full h-full" />
+          <Tile col={5} row={3} colorClass={colorOf(32)} className="w-full h-full" />
+          <Tile col={3} row={3} colorClass={colorOf(33)} className="w-full h-full" />
+          <Tile col={1} row={3} colorClass={colorOf(34)} className="w-full h-full" />
 
-          <Tile col={1} row={1} colorClass={colorOf(9)} className="w-full h-full" />
-          <Tile col={3} row={1} colorClass={colorOf(10)} className="w-full h-full" />
-          <Tile col={5} row={1} colorClass={colorOf(11)} className="w-full h-full" />
-          <Tile col={7} row={1} colorClass={colorOf(12)} className="w-full h-full" />
+          <Tile col={1} row={1} colorClass={colorOf(35)} className="w-full h-full" />
+          <Tile col={3} row={1} colorClass={colorOf(36)} className="w-full h-full" />
+          <Tile col={5} row={1} colorClass={colorOf(37)} className="w-full h-full" />
+          <Tile col={7} row={1} colorClass={colorOf(26)} className="w-full h-full" />
         </div>
 
         <Player
