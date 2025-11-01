@@ -262,13 +262,6 @@ export default function Branch({ onClose, options }: BranchProps) {
             muted
             playsInline
           />
-          <button
-            onClick={stopCamera}
-            className='absolute top-5 right-5 text-white font-bold bg-red-500 rounded-full w-10 h-10 flex justify-center items-center text-2xl'
-            aria-label='カメラ閉じる'
-          >
-            ×
-          </button>
         </div>
       )}
 

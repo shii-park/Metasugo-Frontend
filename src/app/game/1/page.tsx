@@ -32,7 +32,7 @@ import {
   QuizData,
 } from '@/lib/game/wsClient'
 
-const START_POS = { col: 9, row: 5 }
+const START_POS = { col: 7, row: 5 }
 
 // タイルの座標リスト（step = 1 -> positions[0] で描画してるやつ）
 const positions = [
@@ -329,6 +329,18 @@ export default function Game1() {
 
   const colorOf = (id: number) =>
     colorClassOfEvent(kindToEventType(tileById.get(id)?.kind))
+
+    useEffect(() => {
+      if (authUser && wsRef.current && !tilesLoading && step === 0) {
+        const timer = setTimeout(async () => {
+          await moveBy(1)
+          setTimeout(() => {
+            setIsMoving(false)
+          }, 100)
+        }, 500)
+        return () => clearTimeout(timer)
+      }
+    }, [authUser, wsRef.current, tilesLoading])
 
   // --- メインレンダー ---
   return (

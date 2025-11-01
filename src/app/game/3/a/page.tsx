@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -27,7 +27,7 @@ import Tile from '@/components/game/Tile'
 import { colorClassOfEvent } from '@/lib/game/eventColor'
 import { kindToEventType } from '@/lib/game/kindMap'
 import { useGameStore } from '@/lib/game/store'
-import { useTiles } from '@/lib/game/useTiles'
+import { useTiles, type Tile as TileType } from '@/lib/game/useTiles'
 import {
   connectGameSocket,
   GameSocketConnection,
@@ -35,10 +35,13 @@ import {
 } from '@/lib/game/wsClient'
 
 // --- レイアウト（3a） ---
-const START_POS = { col: 7, row: 5 } // 装飾位置（スタート表記など）
+const START_POS = { col: 7, row: 5 }
 const positions = [
+  // 下段 L→R (4)
   { col: 7, row: 5 }, { col: 5, row: 5 }, { col: 3, row: 5 }, { col: 1, row: 5 },
+  // 中段 R→L (5)
   { col: 1, row: 3 }, { col: 3, row: 3 }, { col: 5, row: 3 }, { col: 7, row: 3 }, { col: 9, row: 3 },
+  // 上段 L→R (5)
   { col: 9, row: 1 }, { col: 7, row: 1 }, { col: 5, row: 1 }, { col: 3, row: 1 }, { col: 1, row: 1 },
 ]
 const COLS = [12, 10.5, 9.5, 11.5, 9.5, 11.65, 9.5, 10.35, 12]
@@ -47,6 +50,39 @@ const PAD_X = 10
 const PAD_TOP = 16
 const PAD_BOTTOM = 7
 
+/* ===========================================================
+ * この盤面で使用する tiles.json 側の ID を positions の順に対応付け
+ * （色決定・イベント発火の両方でこの配列を必ず経由する）
+ * =========================================================== */
+const TILE_IDS = [39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52] as const
+const tileIdAt = (pos: number) => TILE_IDS[pos - 1] // pos: 1..12
+
+/** このページの「最後のマス」で強制するイベント種別 */
+const FORCE_LAST_EVENT: EventType = 'branch'
+
+/** effect.type を優先して EventType を判定（無い場合は kind からフォールバック） */
+function eventTypeOfTile(tile?: TileType): EventType | undefined {
+  if (!tile) return undefined
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const t = (tile?.effect as any)?.type as string | undefined
+  switch (t) {
+    case 'profit':
+    case 'loss':
+    case 'quiz':
+    case 'branch':
+    case 'gamble':
+    case 'overall':
+    case 'neighbor':
+    case 'require':
+    case 'goal':
+    case 'conditional':
+    case 'setStatus':
+    case 'childBonus':
+      return t as EventType
+  }
+  return kindToEventType(tile?.kind)
+}
+
 export default function Game3a() {
   const router = useRouter()
   const goalPushedRef = useRef(false)
@@ -54,7 +90,7 @@ export default function Game3a() {
   // 認証
   const [authUser, setAuthUser] = useState<FirebaseUser | null>(null)
 
-  // タイル（バックエンドから取得）
+  // タイル（バックエンド）
   const {
     byId: tileById,
     tiles,
@@ -68,20 +104,20 @@ export default function Game3a() {
 
   const TOTAL_TILES = Math.min(positions.length, tiles?.length ?? positions.length)
 
-  // 進行状態
+  // 進行
   const [step, setStep] = useState(0)
   const [, setServerTileID] = useState<number | null>(null)
   const [isDiceOpen, setIsDiceOpen] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
   const [lastDiceResult, setLastDiceResult] = useState<1 | 2 | 3 | 4 | 5 | 6 | null>(null)
 
-  // イベント表示
+  // イベントUI
   const [activeEventColor, setActiveEventColor] = useState<string | null>(null)
   const [currentEventDetail, setCurrentEventDetail] = useState<string | null>(null)
   const [goalAwaitingEventClose, setGoalAwaitingEventClose] = useState(false)
   const EventComp = activeEventColor ? EVENT_BY_COLOR[activeEventColor] : null
 
-  // 所持金（Gamble/Money +/- 用）
+  // 所持金
   const [money, setMoney] = useState<number>(1000000)
 
   const [, setExpectedFinalStep] = useState<number | null>(null)
@@ -90,7 +126,15 @@ export default function Game3a() {
 
   const cur = useMemo(() => (step === 0 ? START_POS : positions[step - 1]), [step])
 
-  // --- 認証監視 ---
+  /** 盤面 index（1..12）から色クラスを返す。最後は強制イベントを適用 */
+  const colorOfPos = (posIndex: number) => {
+    const id = tileIdAt(posIndex)
+    const isLast = posIndex === TOTAL_TILES
+    const ev = isLast ? FORCE_LAST_EVENT : eventTypeOfTile(tileById.get(id))
+    return colorClassOfEvent(ev)
+  }
+
+  // 認証監視
   useEffect(() => {
     const un = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -104,7 +148,7 @@ export default function Game3a() {
     return () => un()
   }, [])
 
-  // --- WS接続（Game1/2と同様） ---
+  // WS接続
   useEffect(() => {
     if (authUser && !wsRef.current) {
       getIdToken(authUser)
@@ -155,12 +199,12 @@ export default function Game3a() {
     }
   }, [authUser])
 
-  // --- タイル効果（即反映） ---
-  function runTileEffect(tileId: number) {
+  // タイル効果
+  function runTileEffectByTileId(tileId: number) {
     const tile = tileById.get(tileId)
     if (!tile) return
     const ef = tile.effect as { type?: string; amount?: number } | undefined
-    if (!ef || !ef.type) return
+    if (!ef?.type) return
 
     if (ef.type === 'profit') {
       const amt = Number(ef.amount ?? 0) || 0
@@ -177,7 +221,7 @@ export default function Game3a() {
     }
   }
 
-  // --- 前進（アニメ → 効果 → イベント） ---
+  // 前進
   async function moveBy(stepsToMove: number) {
     if (isMoving || activeEventColor) return
     if (step >= TOTAL_TILES) return
@@ -194,30 +238,31 @@ export default function Game3a() {
     setIsMoving(false)
     setExpectedFinalStep(pos)
 
-    if (pos > 0 && pos <= TOTAL_TILES) runTileEffect(pos)
-
     if (pos > 0 && pos <= TOTAL_TILES) {
-      const isGoal = pos === TOTAL_TILES
-      const GOAL_EVENT_TYPE: EventType = 'branch' // ゴール時は分岐扱い（任意）
-      const currentTile = tileById.get(pos)
-      const tileDetail = currentTile?.detail ?? ''
-      const tileEventType: EventType | undefined =
-        isGoal ? GOAL_EVENT_TYPE : kindToEventType(currentTile?.kind)
-      const color = colorClassOfEvent(tileEventType)
+      if (pos > 0 && pos <= TOTAL_TILES) {
+        const tileId = tileIdAt(pos)
+        runTileEffectByTileId(tileId)
+        const isLast = pos === TOTAL_TILES
+        const currentTile = tileById.get(tileId)
 
-      if (color && EVENT_BY_COLOR[color]) {
-        setActiveEventColor(color)
-        if (tileEventType === 'overall' || tileEventType === 'neighbor') {
-          setCurrentEventDetail(tileDetail)
-        }
-        if (isGoal) setGoalAwaitingEventClose(true)
-      } else {
-        setCurrentEventDetail(null)
+        // ★ 最後は必ず Branch にする（このページ仕様）
+        const forced: EventType | undefined = isLast ? FORCE_LAST_EVENT : undefined
+        const tileEventType: EventType | undefined = forced ?? eventTypeOfTile(currentTile)
+        const color = colorClassOfEvent(tileEventType)
+
+        setActiveEventColor(color ?? null)
+        setCurrentEventDetail(
+          tileEventType === 'overall' || tileEventType === 'neighbor'
+            ? (currentTile?.detail ?? '')
+            : null,
+        )
+        // ★ Branch は自前で遷移するため、自動遷移フラグは goal のときのみ
+        setGoalAwaitingEventClose(tileEventType === 'goal')
       }
     }
   }
 
-  // --- サイコロ ---
+  // サイコロ
   function handleRollClick() {
     if (isMoving || !!activeEventColor || !authUser) return
     if (!wsRef.current) return
@@ -231,9 +276,21 @@ export default function Game3a() {
     setIsDiceOpen(false)
   }
 
-  // 色（useTiles→kind→EventType→color）
+  // 色
   const colorOf = (id: number) =>
     colorClassOfEvent(kindToEventType(tileById.get(id)?.kind))
+
+  useEffect(() => {
+    if (authUser && wsRef.current && !tilesLoading && step === 0) {
+      const timer = setTimeout(async () => {
+        await moveBy(1)
+        setTimeout(() => {
+          setIsMoving(false)
+        }, 100)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [authUser, wsRef.current, tilesLoading])
 
   return (
     <div className="relative w-full h-[100dvh] bg-brown-light grid place-items-center">
@@ -248,7 +305,7 @@ export default function Game3a() {
           priority
         />
 
-        {/* ヘッダ/HUD */}
+        {/* HUD */}
         <GameHUD
           money={money}
           remaining={TOTAL_TILES - step}
@@ -274,7 +331,7 @@ export default function Game3a() {
           onConfirm={handleDiceConfirm}
         />
 
-        {/* タイル配置 */}
+        {/* タイル配置：色決定も pos→id 経由で統一（最後は Branch を強制） */}
         <div
           className="absolute inset-0 grid grid-cols-9 grid-rows-5 px-[10%] pt-[9.5%] pb-[7%]"
           style={{
@@ -283,22 +340,23 @@ export default function Game3a() {
             gridTemplateRows: '18% 20% 18% 26% 18%',
           }}
         >
-          <Tile col={7} row={5} colorClass={colorOf(39)} />
-          <Tile col={5} row={5} colorClass={colorOf(40)} />
-          <Tile col={3} row={5} colorClass={colorOf(41)} />
-          <Tile col={1} row={5} colorClass={colorOf(42)} />
+          {/* 下段 1..4 */}
+          <Tile col={7} row={5} colorClass={colorOfPos(1)} className="w-full h-full" />
+          <Tile col={5} row={5} colorClass={colorOfPos(2)} className="w-full h-full" />
+          <Tile col={3} row={5} colorClass={colorOfPos(3)} className="w-full h-full" />
+          <Tile col={1} row={5} colorClass={colorOfPos(4)} className="w-full h-full" />
 
-          <Tile col={1} row={3} colorClass={colorOf(43)} />
-          <Tile col={3} row={3} colorClass={colorOf(44)} />
-          <Tile col={5} row={3} colorClass={colorOf(45)} />
-          <Tile col={7} row={3} colorClass={colorOf(46)} />
-          <Tile col={9} row={3} colorClass={colorOf(47)} />
+          <Tile col={1} row={3} colorClass={colorOfPos(5)} className="w-full h-full" />
+          <Tile col={3} row={3} colorClass={colorOfPos(6)} className="w-full h-full" />
+          <Tile col={5} row={3} colorClass={colorOfPos(7)} className="w-full h-full" />
+          <Tile col={7} row={3} colorClass={colorOfPos(8)} className="w-full h-full" />
+          <Tile col={9} row={3} colorClass={colorOfPos(9)} className="w-full h-full" />
 
-          <Tile col={9} row={1} colorClass={colorOf(48)} />
-          <Tile col={7} row={1} colorClass={colorOf(49)} />
-          <Tile col={5} row={1} colorClass={colorOf(50)} />
-          <Tile col={3} row={1} colorClass={colorOf(51)} />
-          <Tile col={1} row={1} colorClass={colorOf(52)} />
+          <Tile col={9} row={1} colorClass={colorOfPos(10)} className="w-full h-full" />
+          <Tile col={7} row={1} colorClass={colorOfPos(11)} className="w-full h-full" />
+          <Tile col={5} row={1} colorClass={colorOfPos(12)} className="w-full h-full" />
+          <Tile col={3} row={1} colorClass={colorOfPos(13)} className="w-full h-full" />
+          <Tile col={1} row={1} colorClass={colorOfPos(14)} className="w-full h-full" />
         </div>
 
         {/* プレイヤー */}

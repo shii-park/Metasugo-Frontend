@@ -30,7 +30,7 @@ import Tile from '@/components/game/Tile'
 import { colorClassOfEvent } from '@/lib/game/eventColor'
 import { kindToEventType } from '@/lib/game/kindMap'
 import { useGameStore } from '@/lib/game/store'
-import { useTiles } from '@/lib/game/useTiles'
+import { useTiles, type Tile as TileType } from '@/lib/game/useTiles'
 import {
   connectGameSocket,
   GameSocketConnection,
@@ -60,6 +60,35 @@ const ROWS = [12, 11, 18, 8, 18]
 const PAD_X = 7.2
 const PAD_TOP = 16
 const PAD_BOTTOM = 7
+
+const TILE_IDS = [79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90] as const
+const tileIdAt = (pos: number) => TILE_IDS[pos - 1] // pos: 1..12
+
+/** このページの「最後のマス」で強制するイベント種別 */
+const FORCE_LAST_EVENT: EventType = 'branch'
+
+/** effect.type を優先して EventType を判定（無い場合は kind からフォールバック） */
+function eventTypeOfTile(tile?: TileType): EventType | undefined {
+  if (!tile) return undefined
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const t = (tile?.effect as any)?.type as string | undefined
+  switch (t) {
+    case 'profit':
+    case 'loss':
+    case 'quiz':
+    case 'branch':
+    case 'gamble':
+    case 'overall':
+    case 'neighbor':
+    case 'require':
+    case 'goal':
+    case 'conditional':
+    case 'setStatus':
+    case 'childBonus':
+      return t as EventType
+  }
+  return kindToEventType(tile?.kind)
+}
 
 export default function Game4b() {
   const router = useRouter()
@@ -113,6 +142,14 @@ export default function Game4b() {
     () => (step === 0 ? START_POS : positions[step - 1]),
     [step],
   )
+
+  /** 盤面 index（1..12）から色クラスを返す。最後は強制イベントを適用 */
+  const colorOfPos = (posIndex: number) => {
+    const id = tileIdAt(posIndex)
+    const isLast = posIndex === TOTAL_TILES
+    const ev = isLast ? FORCE_LAST_EVENT : eventTypeOfTile(tileById.get(id))
+    return colorClassOfEvent(ev)
+  }
 
   // ===== 認証監視 =====
   useEffect(() => {
@@ -199,11 +236,11 @@ export default function Game4b() {
   }, [authUser])
 
   // ===== タイル効果 =====
-  function runTileEffect(tileId: number) {
+  function runTileEffectByTileId(tileId: number) {
     const tile = tileById.get(tileId)
     if (!tile) return
     const ef = tile.effect as { type?: string; amount?: number } | undefined
-    if (!ef || !ef.type) return
+    if (!ef?.type) return
 
     if (ef.type === 'profit') {
       const amt = Number(ef.amount ?? 0) || 0
@@ -242,24 +279,24 @@ export default function Game4b() {
       return
     }
 
-    if (pos > 0 && pos < TOTAL_TILES) runTileEffect(pos)
+    if (pos > 0 && pos <= TOTAL_TILES) {
+      const tileId = tileIdAt(pos)
+      runTileEffectByTileId(tileId)
 
-    if (pos > 0 && pos < TOTAL_TILES) {
-      const currentTile = tileById.get(pos)
-      const tileDetail = currentTile?.detail ?? ''
-      const tileEventType: EventType | undefined = kindToEventType(
-        currentTile?.kind,
-      )
+      const isGoal = pos === TOTAL_TILES
+      const currentTile = tileById.get(tileId)
+
+      // goal マスは 'goal' を優先
+      const tileEventType: EventType | undefined = isGoal ? 'goal' : eventTypeOfTile(currentTile)
       const color = colorClassOfEvent(tileEventType)
 
-      if (color && EVENT_BY_COLOR[color]) {
-        setActiveEventColor(color)
-        if (tileEventType === 'overall' || tileEventType === 'neighbor') {
-          setCurrentEventDetail(tileDetail)
-        }
-      } else {
-        setCurrentEventDetail(null)
-      }
+      setActiveEventColor(color ?? null)
+      setCurrentEventDetail(
+        tileEventType === 'overall' || tileEventType === 'neighbor'
+          ? (currentTile?.detail ?? '')
+          : null,
+      )
+      setGoalAwaitingEventClose(isGoal)
     }
   }
 
@@ -279,6 +316,18 @@ export default function Game4b() {
 
   const colorOf = (id: number) =>
     colorClassOfEvent(kindToEventType(tileById.get(id)?.kind))
+
+  useEffect(() => {
+    if (authUser && wsRef.current && !tilesLoading && step === 0) {
+      const timer = setTimeout(async () => {
+        await moveBy(1)
+        setTimeout(() => {
+          setIsMoving(false)
+        }, 100)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [authUser, wsRef.current, tilesLoading])
 
   return (
     <div className='relative w-full h-[100dvh] bg-brown-light grid place-items-center'>
@@ -332,20 +381,20 @@ export default function Game4b() {
           }}
         >
           {/* 下段 */}
-          <Tile col={1} row={5} colorClass={colorOf(79)} />
-          <Tile col={3} row={5} colorClass={colorOf(80)} />
-          <Tile col={5} row={5} colorClass={colorOf(81)} />
-          <Tile col={7} row={5} colorClass={colorOf(82)} />
+          <Tile col={1} row={5} colorClass={colorOfPos(1)} />
+          <Tile col={3} row={5} colorClass={colorOfPos(2)} />
+          <Tile col={5} row={5} colorClass={colorOfPos(3)} />
+          <Tile col={7} row={5} colorClass={colorOfPos(4)} />
 
-          <Tile col={7} row={3} colorClass={colorOf(83)} />
-          <Tile col={5} row={3} colorClass={colorOf(84)} />
-          <Tile col={3} row={3} colorClass={colorOf(85)} />
-          <Tile col={1} row={3} colorClass={colorOf(86)} />
+          <Tile col={7} row={3} colorClass={colorOfPos(5)} />
+          <Tile col={5} row={3} colorClass={colorOfPos(6)} />
+          <Tile col={3} row={3} colorClass={colorOfPos(7)} />
+          <Tile col={1} row={3} colorClass={colorOfPos(8)} />
 
-          <Tile col={1} row={1} colorClass={colorOf(87)} />
-          <Tile col={3} row={1} colorClass={colorOf(88)} />
-          <Tile col={5} row={1} colorClass={colorOf(89)} />
-          <Tile col={7} row={1} colorClass={colorOf(90)} />
+          <Tile col={1} row={1} colorClass={colorOfPos(9)} />
+          <Tile col={3} row={1} colorClass={colorOfPos(10)} />
+          <Tile col={5} row={1} colorClass={colorOfPos(11)} />
+          <Tile col={7} row={1} colorClass={colorOfPos(12)} />
           {/* 最後はゴール手前まで */}
         </div>
 
