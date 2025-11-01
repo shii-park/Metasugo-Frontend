@@ -1,26 +1,40 @@
 'use client'
 
-import { useGameStore } from '@/lib/game/store'
-import { useMemo, useState } from 'react'
+import { useGameStore } from '@/lib/game/store' // 差額(delta)の読み取りに必要
+import React, { useMemo, useState } from 'react'
 
-type Props = { onClose: () => void }
+// ★ 修正点: Props を (Gamble.tsx と同じように) 定義
+type Props = {
+  currentMoney: number;
+  onUpdateMoney: (newTotal: number) => void;
+  onClose: () => void;
+}
 
-export default function MoneyMinus({ onClose }: Props) {
+// ★ 修正点: Props を受け取る
+export default function MoneyMinus({ currentMoney, onUpdateMoney, onClose }: Props) {
   const [showContent, setShowContent] = useState(false)
 
+  // 差額(delta)はストアから読み取る
   const moneyChange = useGameStore((s) => s.moneyChange)
   const clearMoneyChange = useGameStore((s) => s.clearMoneyChange)
 
   // 絶対値で表示（null/正なら0に）
   const deltaAbs = useMemo(() => {
     const d = moneyChange?.delta ?? 0
-    return d < 0 ? Math.abs(d) : 0
+    return d < 0 ? Math.abs(d) : 0 // マイナスの時だけ表示
   }, [moneyChange])
 
   const handleAdvance = () => {
     if (showContent) {
-      clearMoneyChange()
-      onClose()
+      // ★ 修正点: 親(page.tsx)の所持金を更新
+      const delta = moneyChange?.delta ?? 0
+      const newTotal = currentMoney + delta // (delta はマイナスのはず)
+      
+      // page.tsx の setMoney(newTotal) を呼び出す
+      onUpdateMoney(newTotal)
+      
+      clearMoneyChange() // ストアの差額をクリア
+      onClose() // モーダルを閉じる
     } else {
       setShowContent(true)
     }
