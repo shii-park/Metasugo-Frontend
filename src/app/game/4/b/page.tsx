@@ -216,6 +216,7 @@ export default function Game4b() {
               if (!authUser || userID !== authUser.uid) return
               setMoney(finalMoney)
               useGameStore.getState().setMoney(finalMoney)
+              setShowFinish(true)
               try {
                 wsRef.current?.close()
               } finally {
@@ -277,7 +278,6 @@ export default function Game4b() {
     setExpectedFinalStep(pos)
 
     if (pos === TOTAL_TILES) {
-      setShowFinish(true)
       return
     }
 

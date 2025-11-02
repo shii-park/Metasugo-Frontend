@@ -117,7 +117,7 @@ export default function Home() {
                     {scoreError ? '未プレイ' : bestScore !== null ? `${bestScore.toLocaleString()}円` : '読み込み中...'}
                   </span>
                 </p>
-                <p className='flex justify-center items-center border-b '>
+                <p className='flex justify-center items-center border-b '>    
                   <Link href={'/ranking'}>ランキングページはこちら</Link>
                 </p>
               </div>
