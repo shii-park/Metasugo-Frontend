@@ -318,9 +318,9 @@ export default function Game2b() {
         <div className="absolute top-[3%] right-[6%]">
           <SettingsMenu sizePct={8} className="w-1/5 z-10" />
         </div>
-        <div className="absolute top-[15%] left-[3%] z-10">
+        {/* <div className="absolute top-[15%] left-[3%] z-10">
           <Status />
-        </div>
+        </div> */}
 
         <DiceButton
           onClick={handleRollClick}
