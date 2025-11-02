@@ -2,13 +2,15 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react' // useState をインポート
 import { useAuth } from '../context/AuthContext'
 import { logout } from '../services/authService'
 
 export default function Home() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const [bestScore, setBestScore] = useState<number | null>(null) // 最高金額を保持するstate
+  const [scoreError, setScoreError] = useState<string | null>(null) // エラーメッセージを保持するstate
 
   const handleLogout = async () => {
     await logout()
@@ -20,6 +22,34 @@ export default function Home() {
       router.push('/signin') // ログインしていなければ自動遷移
     }
   }, [user, loading, router])
+
+  // /bestscore から最高金額を取得するuseEffect
+  useEffect(() => {
+    if (user) {
+      const fetchBestScore = async () => {
+        try {
+          const token = await user.getIdToken()
+          const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_ORIGIN}/bestscore`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+
+          if (!res.ok) {
+            throw new Error('最高金額の取得に失敗しました')
+          }
+
+          const data = await res.json()
+          setBestScore(data.money)
+        } catch (error) {
+          console.error(error)
+          setScoreError(error instanceof Error ? error.message : '不明なエラーが発生しました')
+        }
+      }
+
+      fetchBestScore()
+    }
+  }, [user]) // user オブジェクトが利用可能になったら実行
 
   if (loading) {
     return (
@@ -82,8 +112,10 @@ export default function Home() {
               </div>
               <div className='font-bold bg-white text-l text-[#5B7BA6] flex flex-col items-center justify-center px-6 py-4 w-2/5 mx-auto'>
                 <p className='flex justify-between w-full'>
-                  <span>最高金額</span>
-                  <span>○○円</span>
+                  <span>あなたの最高金額</span>
+                  <span>
+                    {scoreError ? '未プレイ' : bestScore !== null ? `${bestScore.toLocaleString()}円` : '読み込み中...'}
+                  </span>
                 </p>
                 <p className='flex justify-center items-center border-b '>
                   <Link href={'/ranking'}>ランキングページはこちら</Link>

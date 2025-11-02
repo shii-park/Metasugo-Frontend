@@ -19,6 +19,7 @@ function MenuButton({
         onClick={onClick}
         className="rounded-md bg-[#5B7BA6] p-4 mx-4 hover:opacity-80 transition"
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={label} className="w-12 h-12" />
       </button>
       <div className="text-md text-[#5B7BA6] font-bold">{label}</div>

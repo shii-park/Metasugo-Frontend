@@ -1,5 +1,7 @@
 'use client'
+
 import { useGameStore } from '@/lib/game/store'
+import { getActiveSocket } from '@/lib/game/wsClient'
 import { useRouter } from 'next/navigation'
 
 type FinishProps = {
@@ -10,38 +12,47 @@ type FinishProps = {
 
 export default function Finish({
   title = 'ゴール！',
-  message = '',
   onClose,
 }: FinishProps) {
   const router = useRouter()
   const setRouting = useGameStore((s) => s.setRouting)
 
+  // 🪙 合計金額を store から取得
+  const totalMoney = useGameStore((s) => s.money) // ← store 側で money を保持している前提
+  // もし store に money がない場合は props 経由に変更も可
+
   const goHome = () => {
+    getActiveSocket()?.close()
     setRouting(true)
     onClose?.()
-    router.push('/') // 必要なら結果ページに変更: /result など
+    router.push('/')
   }
 
   const restart = () => {
+    getActiveSocket()?.close()
     setRouting(true)
     onClose?.()
-    router.push('/game/1') // リトライ先（任意で調整）
+    router.push('/game/1')
   }
 
   return (
     <div className="fixed inset-0 w-full h-full backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="
+      <div
+        className="
         rounded-md border-2 border-[#5B7BA6] bg-[#E3DECF]
-        w-[min(50vw,600px)] h-[min(80vh,500 px)]
+        w-[min(50vw,600px)] h-[min(80vh,500px)]
         flex flex-col items-center justify-center
-      ">
-        <div className="text-[#5B7BA6] text-3xl font-bold m-4">ゴール</div>
+      "
+      >
+        <div className="text-[#5B7BA6] text-3xl font-bold m-4">{title}</div>
+
         <div className="font-bold rounded-md bg-white text-l text-[#5B7BA6] flex-col items-center justify-center px-6 py-4 mb-4 w-3/5 mx-auto">
-          <p className="flex justify-between w-full">
-            <span>合計金額</span>
-            <span>○○円</span>
-          </p>
+          <div className="flex flex-col items-center text-center">
+            <p className="mb-2">あなたが人生で獲得した金額</p>
+            <p className="text-2xl font-bold">{totalMoney.toLocaleString()}円</p>
+          </div>
         </div>
+
         <button
           type="button"
           className="px-4 py-1 m-4 rounded bg-[#5B7BA6] text-white"
@@ -51,25 +62,5 @@ export default function Finish({
         </button>
       </div>
     </div>
-    // <div className="flex justify-center items-center w-full z-100">
-    //   <div className="rounded-xl border-2 border-white/90 bg-white/95 w-4/5 backdrop-blur-sm shadow-lg p-4 md:p-5">
-    //     <p className="font-bold mb-2">{title}</p>
-    //     <div className="font-bold bg-white text-l text-[#5B7BA6] flex items-center justify-center py-4 mx-auto">
-    //       <p className="flex justify-between w-full">
-    //         <span>合計金額</span>
-    //         <span>{message}円</span>
-    //       </p>
-    //     </div>
-    //     <div className="mt-3 flex gap-2">
-    //       <button
-    //         type="button"
-    //         className="px-4 py-2 rounded bg-blue-600 text-white"
-    //         onClick={goHome}
-    //       >
-    //         ホームに戻る
-    //       </button>
-    //     </div>
-    //   </div>
-    // </div>
   )
 }

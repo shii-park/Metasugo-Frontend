@@ -3,7 +3,7 @@
 /**
  * WebSocketクライアント (フロント側)
  *
- * - NEXT_PUBLIC_WS_URL でサーバー (例: ws://localhost:8080/ws/connection)
+ * - NEXT_PUBLIC_WS_URL でサーバー (例: ws://localhost:8080/ws)
  * - 認証は URL の ?token=... で付与
  * - 自動再接続 / ハートビート / 送信キュー付き
  */
@@ -113,6 +113,16 @@ export type PlayerStatusChangedMessage = {
   payload: PlayerStatusChangedPayload
 }
 
+/** NEIGHBOR_REQUIRED */
+export type NeighborRequiredPayload = {
+  tileID: number;
+  message: string;
+};
+export type NeighborRequiredMessage = {
+  type: "NEIGHBOR_REQUIRED";
+  payload: NeighborRequiredPayload;
+};
+
 /** ERROR */
 export type ErrorPayload = {
   message: string
@@ -137,6 +147,7 @@ export type ServerMessage =
   | GambleResultMessage
   | PlayerFinishedMessage
   | PlayerStatusChangedMessage
+  | NeighborRequiredMessage
   | ErrorMessage
   | { type: 'PONG' } // ハートビート応答
   | { type: string; [k: string]: unknown } // 将来拡張用
@@ -193,8 +204,10 @@ export type GameSocketHandlers = {
     choice: 'High' | 'Low',
     won: boolean,
     amount: number,
-    newMoney: number,
-  ) => void
+    newMoney: number
+  ) => void;
+
+  onNeighborRequired?: (tileID: number, message: string) => void;
   onPlayerFinished?: (userID: string, money: number) => void
   onPlayerStatusChanged?: (userID: string, status: string, value: boolean | string | number | null) => void
   onErrorMessage?: (message: string) => void
@@ -237,12 +250,15 @@ function encodeUrlWithToken(base: string, token: string): string {
 }
 
 /** payload あり/なし、snake/camel 混在に耐える取り出し */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getPayload<T extends object = any>(msg: unknown): Partial<T> {
+function getPayload<T extends object = Record<string, unknown>>(msg: unknown): Partial<T> {
   if (!msg || typeof msg !== 'object') return {}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const anyMsg = msg as any
-  const p = anyMsg.payload ?? anyMsg
+
+  const payloadSource = 'payload' in msg && msg.payload ? msg.payload : msg
+  if (!payloadSource || typeof payloadSource !== 'object') {
+    return {}
+  }
+
+  const p = payloadSource as Record<string, unknown>
 
   // snake -> camel 柔軟対応
   const out: Record<string, unknown> = {}
@@ -357,9 +373,12 @@ export function connectGameSocket(
         return
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const type = (parsed as any)?.type as string
-      if (!type) return
+      if (typeof parsed !== 'object' || parsed === null || !('type' in parsed) || typeof parsed.type !== 'string') {
+        // 不正なメッセージ形式
+        console.error('[WS] invalid message format:', parsed)
+        return
+      }
+      const type = parsed.type
 
       switch (type) {
         case 'PONG':
