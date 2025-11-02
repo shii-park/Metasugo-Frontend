@@ -285,17 +285,17 @@ export default function Game2a() {
     setIsDiceOpen(false)
   }
 
-  // useEffect(() => {
-  //   if (authUser && wsRef.current && !tilesLoading && step === 0) {
-  //     const timer = setTimeout(async () => {
-  //       await moveBy(1)
-  //       setTimeout(() => {
-  //         setIsMoving(false)
-  //       }, 100)
-  //     }, 500)
-  //     return () => clearTimeout(timer)
-  //   }
-  // }, [authUser, wsRef.current, tilesLoading])
+  useEffect(() => {
+    if (authUser && wsRef.current && !tilesLoading && step === 0) {
+      const timer = setTimeout(async () => {
+        await moveBy(1)
+        setTimeout(() => {
+          setIsMoving(false)
+        }, 100)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [authUser, wsRef.current, tilesLoading])
 
   return (
     <div className="relative w-full h-[100dvh] bg-brown-light grid place-items-center">
@@ -318,9 +318,9 @@ export default function Game2a() {
         <div className="absolute top-[3%] right-[6%]">
           <SettingsMenu sizePct={8} className="w-1/5 z-10" />
         </div>
-        <div className="absolute top-[15%] left-[3%] z-10">
+        {/* <div className="absolute top-[15%] left-[3%] z-10">
           <Status />
-        </div>
+        </div> */}
 
         <DiceButton
           onClick={handleRollClick}
