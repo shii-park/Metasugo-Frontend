@@ -350,9 +350,9 @@ export default function Game4a() {
         <div className='absolute top-[3%] right-[6%]'>
           <SettingsMenu sizePct={8} className='w-1/5 z-10' />
         </div>
-        <div className='absolute top-[15%] left-[3%] z-10'>
+        {/* <div className='absolute top-[15%] left-[3%] z-10'>
           <Status />
-        </div>
+        </div> */}
 
         {/* ゴール */}
         <div className='absolute top-[10%] sm:top-[12%] right-[13%] rounded-md bg-brown-default/90 text-white border-2 border-white w-[20%] h-[20%] font-bold text-xl md:text-3xl flex items-center justify-center z-20'>
