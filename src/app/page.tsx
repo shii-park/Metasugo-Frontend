@@ -114,7 +114,7 @@ export default function Home() {
                 <p className='flex justify-between w-full'>
                   <span>あなたの最高金額</span>
                   <span>
-                    {scoreError ? '取得失敗' : bestScore !== null ? `${bestScore.toLocaleString()}円` : '読み込み中...'}
+                    {scoreError ? '未プレイ' : bestScore !== null ? `${bestScore.toLocaleString()}円` : '読み込み中...'}
                   </span>
                 </p>
                 <p className='flex justify-center items-center border-b '>
